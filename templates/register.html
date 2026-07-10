@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Registrasi User · SE2026 Monitoring{% endblock %}
+{% block page_id %}register{% endblock %}
+{% block content %}
+<div class="auth-layout compact">
+  <section class="auth-hero"><div class="auth-brand"><span class="brand-emblem large">SE<span>26</span></span><span>BPS Kabupaten Banyuwangi</span></div><div class="hero-copy"><span class="eyebrow">Akses monitoring</span><h1>Pantau progres<br><em>dengan jelas.</em></h1><p>Akun User dapat melihat dashboard, grafik, monitoring, filter, pencarian, dan pagination.</p></div></section>
+  <section class="auth-panel"><div class="login-card wide"><span class="eyebrow dark">Registrasi User</span><h2>Buat akun monitoring</h2><form method="post">
+    <div class="row g-3"><div class="col-12"><label class="form-label">Nama lengkap</label><input class="form-control" name="nama_lengkap" required></div><div class="col-md-6"><label class="form-label">Username</label><input class="form-control" name="username" required></div><div class="col-md-6"><label class="form-label">Email</label><input class="form-control" type="email" name="email" required></div><div class="col-md-6"><label class="form-label">Password</label><input class="form-control" type="password" name="password" minlength="8" required></div><div class="col-md-6"><label class="form-label">Konfirmasi password</label><input class="form-control" type="password" name="confirm_password" minlength="8" required></div></div>
+    <button class="btn btn-primary w-100 mt-4" type="submit">Daftar</button></form><div class="auth-foot">Sudah punya akun? <a href="{{ url_for('auth.login') }}">Kembali ke login</a></div></div></section>
+</div>
+{% endblock %}
+

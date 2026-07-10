@@ -1,0 +1,2 @@
+{% extends 'base.html' %}{% block title %}Kesalahan Sistem · SE2026{% endblock %}{% block content %}<div class="error-state"><strong>500</strong><h1>Sistem sedang bermasalah</h1><p>{{ friendly_message or 'Terjadi kesalahan internal. Silakan coba kembali atau hubungi administrator.' }}</p><a class="btn btn-primary" href="{{ url_for('dashboard.dashboard') if current_user else url_for('auth.login') }}">Coba Kembali</a></div>{% endblock %}
+

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard · SE2026 Monitoring{% endblock %}
+{% block page_id %}dashboard{% endblock %}
+{% block content %}
+<div class="page-heading"><div><span class="eyebrow dark">Ikhtisar Kabupaten Banyuwangi</span><h1>Dashboard Monitoring</h1><p>Ringkasan progres berdasarkan data mentah sheet SLS terbaru.</p></div>{% if current_user.role == 'admin' %}<a class="btn btn-primary" href="{{ url_for('upload.upload') }}"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Data SLS</a>{% endif %}</div>
+{% if summary.total_sls == 0 %}
+<div class="empty-state"><div class="empty-icon"><i class="fa-solid fa-chart-pie"></i></div><h2>Belum ada data</h2><p>{% if current_user.role == 'admin' %}Silakan upload file SLS terlebih dahulu.{% else %}Belum ada data yang tersedia. Silakan hubungi Admin untuk upload data SLS.{% endif %}</p>{% if current_user.role == 'admin' %}<a class="btn btn-primary" href="{{ url_for('upload.upload') }}">Upload sekarang</a>{% endif %}</div>
+{% else %}
+<div class="metric-grid">
+  {% set metrics = [('Total Kecamatan',summary.total_kecamatan,'fa-map-location-dot','brown'),('Total PML',summary.total_pml,'fa-people-roof','orange'),('Total PCL',summary.total_pcl,'fa-user-group','gold'),('Total SLS',summary.total_sls,'fa-location-crosshairs','cream'),('Total Target',summary.total_target,'fa-bullseye','brown'),('Sudah Upload',summary.total_processed,'fa-circle-check','green'),('Belum Upload',summary.total_remaining,'fa-clock','red'),('Progress Keseluruhan',('%.2f%%'|format(summary.progress)),'fa-chart-line','orange')] %}
+  {% for label,value,icon,tone in metrics %}<article class="metric-card {{ tone }}"><div class="metric-icon"><i class="fa-solid {{ icon }}"></i></div><div><span>{{ label }}</span><strong>{{ value if '%' in value|string else '{:,}'.format(value) }}</strong></div></article>{% endfor %}
+</div>
+<div class="status-strip"><article><span class="dot red"></span><div><small>SLS Belum Mulai</small><strong>{{ '{:,}'.format(summary.sls_belum_mulai) }}</strong></div></article><article><span class="dot orange"></span><div><small>SLS Sedang Proses</small><strong>{{ '{:,}'.format(summary.sls_sedang_proses) }}</strong></div></article><article><span class="dot green"></span><div><small>SLS Selesai</small><strong>{{ '{:,}'.format(summary.sls_selesai) }}</strong></div></article><article><span class="dot gray"></span><div><small>SLS Data Kosong</small><strong>{{ '{:,}'.format(summary.sls_data_kosong) }}</strong></div></article></div>
+<div class="chart-grid">
+  <article class="panel chart-card"><div class="panel-title"><div><span>Komposisi</span><h2>Upload keseluruhan</h2></div></div><div class="chart-wrap small"><canvas id="uploadChart"></canvas></div></article>
+  <article class="panel chart-card wide"><div class="panel-title"><div><span>Wilayah</span><h2>Progress per Kecamatan</h2></div></div><div class="chart-wrap"><canvas id="kecamatanChart"></canvas></div></article>
+  <article class="panel chart-card"><div class="panel-title"><div><span>Workflow</span><h2>Status pekerjaan</h2></div></div><div class="chart-wrap"><canvas id="workflowChart"></canvas></div></article>
+  <article class="panel chart-card"><div class="panel-title"><div><span>Pengawas</span><h2>Progress per PML</h2></div></div><div class="chart-wrap"><canvas id="pmlChart"></canvas></div></article>
+  <article class="panel chart-card"><div class="panel-title"><div><span>Pencacah</span><h2>Progress per PCL</h2></div></div><div class="chart-wrap"><canvas id="pclChart"></canvas></div></article>
+  <article class="panel chart-card"><div class="panel-title"><div><span>Perhatian</span><h2>Kecamatan terendah</h2></div></div><div class="chart-wrap"><canvas id="lowKecChart"></canvas></div></article>
+  <article class="panel chart-card"><div class="panel-title"><div><span>Perhatian</span><h2>PML terendah</h2></div></div><div class="chart-wrap"><canvas id="lowPmlChart"></canvas></div></article>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}{% if summary.total_sls %}<script>window.SE2026_SUMMARY={{ summary|tojson }};</script><script src="{{ url_for('static', filename='js/chart.js') }}"></script><script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>{% endif %}{% endblock %}
+

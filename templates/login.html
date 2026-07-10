@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Login · SE2026 Monitoring{% endblock %}
+{% block page_id %}login{% endblock %}
+{% block content %}
+<div class="auth-layout">
+  <section class="auth-hero">
+    <div class="auth-brand"><span class="brand-emblem large">SE<span>26</span></span><span>BPS Kabupaten Banyuwangi</span></div>
+    <div class="hero-copy">
+      <span class="eyebrow">Sensus Ekonomi 2026</span>
+      <h1>Data bergerak.<br><em>Keputusan menguat.</em></h1>
+      <p>Pusat monitoring progres pendataan SLS Kabupaten Banyuwangi yang ringkas, akurat, dan selalu terukur.</p>
+    </div>
+    <div class="hero-metric"><span>Dashboard Monitoring</span><strong>Satu sumber data SLS</strong></div>
+  </section>
+  <section class="auth-panel">
+    <div class="login-card">
+      <span class="eyebrow dark">Selamat datang</span>
+      <h2>Masuk ke SE2026 Monitoring</h2>
+      <p>Gunakan akun Admin atau User yang telah terdaftar.</p>
+      <form method="post" novalidate>
+        <div class="mb-3"><label class="form-label" for="identity">Username atau email</label><div class="input-icon"><i class="fa-regular fa-user"></i><input class="form-control" id="identity" name="identity" required autofocus></div></div>
+        <div class="mb-2"><label class="form-label" for="password">Password</label><div class="input-icon"><i class="fa-solid fa-lock"></i><input class="form-control" type="password" id="password" name="password" required><button type="button" class="password-toggle" data-target="password" aria-label="Tampilkan password"><i class="fa-regular fa-eye"></i></button></div></div>
+        <button class="btn btn-primary w-100 mt-3" type="submit">Masuk <i class="fa-solid fa-arrow-right"></i></button>
+      </form>
+      <div class="auth-foot">Belum punya akun? <a href="{{ url_for('auth.register') }}">Daftar sebagai User</a></div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script>document.querySelectorAll('.password-toggle').forEach(b=>b.addEventListener('click',()=>{const i=document.getElementById(b.dataset.target);i.type=i.type==='password'?'text':'password'}));</script>{% endblock %}
+

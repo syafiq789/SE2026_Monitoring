@@ -1,0 +1,2 @@
+{% extends 'base.html' %}{% block title %}Halaman Tidak Ditemukan · SE2026{% endblock %}{% block content %}<div class="error-state"><strong>404</strong><h1>Halaman tidak ditemukan</h1><p>Alamat yang Anda buka tidak tersedia.</p><a class="btn btn-primary" href="{{ url_for('dashboard.dashboard') if current_user else url_for('auth.login') }}">Kembali</a></div>{% endblock %}
+

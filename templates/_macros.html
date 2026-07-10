@@ -1,0 +1,13 @@
+{% macro progress_bar(value) %}
+{% set tone = 'success' if value >= 100 else ('warning' if value > 0 else 'danger') %}
+<div class="progress progress-slim" role="progressbar" aria-label="Progress {{ '%.2f'|format(value) }} persen" aria-valuenow="{{ value }}" aria-valuemin="0" aria-valuemax="100">
+  <div class="progress-bar bg-{{ tone }}" style="width: {{ [value, 100]|min }}%"></div>
+</div>
+<small class="progress-value">{{ '%.2f'|format(value) }}%</small>
+{% endmacro %}
+
+{% macro status_badge(status) %}
+{% set css = {'Data Kosong':'secondary','Belum Mulai':'danger','Sedang Proses':'warning','Selesai':'success'} %}
+<span class="badge text-bg-{{ css.get(status, 'secondary') }}">{{ status }}</span>
+{% endmacro %}
+
