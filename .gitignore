@@ -12,3 +12,6 @@ exports/*
 !exports/.gitkeep
 
 .streamlit/secrets.toml
+*.docx
+lookbook/
+instance/
