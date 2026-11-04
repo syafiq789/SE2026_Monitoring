@@ -1,31 +1,380 @@
-{% extends 'base.html' %}
-{% block title %}Login · SE2026 Monitoring{% endblock %}
-{% block page_id %}login{% endblock %}
-{% block content %}
-<div class="auth-layout">
-  <section class="auth-hero">
-    <div class="auth-brand"><span class="brand-emblem large">SE<span>26</span></span><span>BPS Kabupaten Banyuwangi</span></div>
-    <div class="hero-copy">
-      <span class="eyebrow">Sensus Ekonomi 2026</span>
-      <h1>Data bergerak.<br><em>Keputusan menguat.</em></h1>
-      <p>Pusat monitoring progres pendataan SLS Kabupaten Banyuwangi yang ringkas, akurat, dan selalu terukur.</p>
-    </div>
-    <div class="hero-metric"><span>Dashboard Monitoring</span><strong>Satu sumber data SLS</strong></div>
-  </section>
-  <section class="auth-panel">
-    <div class="login-card">
-      <span class="eyebrow dark">Selamat datang</span>
-      <h2>Masuk ke SE2026 Monitoring</h2>
-      <p>Gunakan akun Admin atau User yang telah terdaftar.</p>
-      <form method="post" novalidate>
-        <div class="mb-3"><label class="form-label" for="identity">Username atau email</label><div class="input-icon"><i class="fa-regular fa-user"></i><input class="form-control" id="identity" name="identity" required autofocus></div></div>
-        <div class="mb-2"><label class="form-label" for="password">Password</label><div class="input-icon"><i class="fa-solid fa-lock"></i><input class="form-control" type="password" id="password" name="password" required><button type="button" class="password-toggle" data-target="password" aria-label="Tampilkan password"><i class="fa-regular fa-eye"></i></button></div></div>
-        <button class="btn btn-primary w-100 mt-3" type="submit">Masuk <i class="fa-solid fa-arrow-right"></i></button>
-      </form>
-      <div class="auth-foot">Belum punya akun? <a href="{{ url_for('auth.register') }}">Daftar sebagai User</a></div>
-    </div>
-  </section>
-</div>
-{% endblock %}
-{% block scripts %}<script>document.querySelectorAll('.password-toggle').forEach(b=>b.addEventListener('click',()=>{const i=document.getElementById(b.dataset.target);i.type=i.type==='password'?'text':'password'}));</script>{% endblock %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Akses · SE2026 Monitoring BPS Banyuwangi</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}?v=21">
+</head>
+<body>
+
+  {% set current_tab = active_tab|default(request.args.get('tab', 'login')) %}
+
+  <main class="portal-shell">
+    <section class="portal-card">
+
+      <!-- HEADER PORTAL -->
+      <header class="portal-header">
+        <div class="portal-brand-badge">
+          <div class="portal-logo-box">SE26</div>
+          <div class="portal-brand-text">
+            <strong>BPS Kabupaten Banyuwangi</strong>
+            <span>Sensus Ekonomi 2026</span>
+          </div>
+        </div>
+
+        <h1 class="portal-title" id="portalHeadingTitle">
+          {% if current_tab == 'register' %}
+            Daftar Akun Baru
+          {% else %}
+            Portal Monitoring SE2026
+          {% endif %}
+        </h1>
+        <p class="portal-subtitle" id="portalHeadingSubtitle">
+          {% if current_tab == 'register' %}
+            Pilih role Admin atau User untuk mulai mengakses dashboard monitoring.
+          {% else %}
+            Masuk dengan akun terdaftar atau daftar terlebih dahulu sebelum mengakses sistem.
+          {% endif %}
+        </p>
+      </header>
+
+      <!-- TAB SWITCHER (MASUK vs DAFTAR AKUN) -->
+      <div class="portal-tabs" role="tablist">
+        <button
+          type="button"
+          class="portal-tab-btn {% if current_tab != 'register' %}active{% endif %}"
+          data-target="pane-login"
+          id="tabBtnLogin"
+        >
+          <i class="fa-solid fa-right-to-bracket"></i>
+          <span>Masuk Akun</span>
+        </button>
+
+        <button
+          type="button"
+          class="portal-tab-btn {% if current_tab == 'register' %}active{% endif %}"
+          data-target="pane-register"
+          id="tabBtnRegister"
+        >
+          <i class="fa-solid fa-user-plus"></i>
+          <span>Daftar Akun Baru</span>
+        </button>
+      </div>
+
+      <!-- FLASH MESSAGES -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="login-alerts">
+            {% for category, message in messages %}
+              <div
+                class="alert alert-{{ 'danger' if category in ['error', 'danger'] else category }} alert-dismissible fade show"
+                role="alert"
+              >
+                <i class="fa-solid fa-circle-info"></i>
+                <span>{{ message }}</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- ==================== TAB 1: MASUK AKUN ==================== -->
+      <div
+        id="pane-login"
+        class="portal-tab-pane {% if current_tab != 'register' %}active{% endif %}"
+      >
+        <form method="POST" action="{{ url_for('auth.login') }}" class="login-form" autocomplete="on">
+          {% if request.args.get('next') %}
+            <input type="hidden" name="next" value="{{ request.args.get('next') }}">
+          {% endif %}
+
+          <div class="login-field">
+            <label for="username">Username atau Email</label>
+            <div class="login-input-group">
+              <span class="login-input-icon">
+                <i class="fa-regular fa-user"></i>
+              </span>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                class="form-control"
+                placeholder="Masukkan username atau email terdaftar"
+                value="{{ request.form.get('username', '') }}"
+                autocomplete="username"
+                required
+              >
+            </div>
+          </div>
+
+          <div class="login-field">
+            <label for="password">Password</label>
+            <div class="login-input-group">
+              <span class="login-input-icon">
+                <i class="fa-solid fa-lock"></i>
+              </span>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                class="form-control"
+                placeholder="Masukkan password Anda"
+                autocomplete="current-password"
+                required
+              >
+              <button
+                type="button"
+                id="togglePassword"
+                class="password-toggle"
+                aria-label="Tampilkan password"
+              >
+                <i id="passwordIcon" class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="login-options">
+            <label class="remember-option">
+              <input type="checkbox" name="remember" value="1">
+              <span>Ingat sesi saya</span>
+            </label>
+
+            <span class="login-security">
+              <i class="fa-solid fa-shield-halved"></i>
+              Sesi Terenkripsi
+            </span>
+          </div>
+
+          <button type="submit" class="login-submit">
+            <span>Masuk ke Dashboard</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </form>
+
+        <div class="portal-switch-hint">
+          <span>Belum punya akun Admin atau User?</span>
+          <button type="button" class="portal-switch-link" data-switch-to="pane-register">
+            Daftar sekarang
+          </button>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 2: DAFTAR AKUN BARU ==================== -->
+      {% set selected_role = request.form.get('role', request.args.get('role', 'user')) %}
+      <div
+        id="pane-register"
+        class="portal-tab-pane {% if current_tab == 'register' %}active{% endif %}"
+      >
+        <form method="POST" action="{{ url_for('auth.register') }}" class="login-form" autocomplete="off">
+
+          <!-- PILIH ROLE AKUN -->
+          <div class="login-field">
+            <label>Pilih Role Pendaftaran</label>
+            <div class="role-selector-grid">
+              <label class="role-option-card">
+                <input
+                  type="radio"
+                  name="role"
+                  value="user"
+                  {% if selected_role != 'admin' %}checked{% endif %}
+                >
+                <div class="role-option-copy">
+                  <strong><i class="fa-solid fa-user me-1"></i> User Monitoring</strong>
+                  <small>Dashboard, Tabel SLS/PCL/PML, WebGIS & Follow-Up WA</small>
+                </div>
+              </label>
+
+              <label class="role-option-card">
+                <input
+                  type="radio"
+                  name="role"
+                  value="admin"
+                  {% if selected_role == 'admin' %}checked{% endif %}
+                >
+                <div class="role-option-copy">
+                  <strong><i class="fa-solid fa-user-shield me-1"></i> Administrator</strong>
+                  <small>Akses Penuh + Upload SLS, Export Data & Kelola User</small>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- NAMA LENGKAP & USERNAME (2 KOLOM RINGKAS) -->
+          <div class="form-grid-2">
+            <div class="login-field">
+              <label for="reg_nama_lengkap">Nama Lengkap</label>
+              <div class="login-input-group">
+                <span class="login-input-icon"><i class="fa-regular fa-id-card"></i></span>
+                <input
+                  type="text"
+                  id="reg_nama_lengkap"
+                  name="nama_lengkap"
+                  class="form-control"
+                  placeholder="Nama lengkap"
+                  value="{{ request.form.get('nama_lengkap', '') }}"
+                  required
+                >
+              </div>
+            </div>
+
+            <div class="login-field">
+              <label for="reg_username">Username</label>
+              <div class="login-input-group">
+                <span class="login-input-icon"><i class="fa-regular fa-user"></i></span>
+                <input
+                  type="text"
+                  id="reg_username"
+                  name="username"
+                  class="form-control"
+                  placeholder="Username unik"
+                  value="{{ request.form.get('username', '') }}"
+                  required
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- EMAIL -->
+          <div class="login-field">
+            <label for="reg_email">Alamat Email</label>
+            <div class="login-input-group">
+              <span class="login-input-icon"><i class="fa-regular fa-envelope"></i></span>
+              <input
+                type="email"
+                id="reg_email"
+                name="email"
+                class="form-control"
+                placeholder="nama@bps.go.id / email aktif"
+                value="{{ request.form.get('email', '') }}"
+                required
+              >
+            </div>
+          </div>
+
+          <!-- PASSWORD & KONFIRMASI (2 KOLOM RINGKAS) -->
+          <div class="form-grid-2">
+            <div class="login-field">
+              <label for="reg_password">Password</label>
+              <div class="login-input-group">
+                <span class="login-input-icon"><i class="fa-solid fa-lock"></i></span>
+                <input
+                  type="password"
+                  id="reg_password"
+                  name="password"
+                  class="form-control"
+                  placeholder="Min. 8 karakter"
+                  minlength="8"
+                  required
+                >
+              </div>
+            </div>
+
+            <div class="login-field">
+              <label for="reg_confirm_password">Ulangi Password</label>
+              <div class="login-input-group">
+                <span class="login-input-icon"><i class="fa-solid fa-check-double"></i></span>
+                <input
+                  type="password"
+                  id="reg_confirm_password"
+                  name="confirm_password"
+                  class="form-control"
+                  placeholder="Konfirmasi"
+                  minlength="8"
+                  required
+                >
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="login-submit">
+            <span>Daftarkan Akun Sekarang</span>
+            <i class="fa-solid fa-check"></i>
+          </button>
+        </form>
+
+        <div class="portal-switch-hint">
+          <span>Sudah memiliki akun terdaftar?</span>
+          <button type="button" class="portal-switch-link" data-switch-to="pane-login">
+            Masuk di sini
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- PILL FITUR DI BAWAH KARTU -->
+    <div class="portal-feature-strip">
+      <span class="portal-feature-pill">
+        <i class="fa-solid fa-map-location-dot"></i> 25 Kecamatan WebGIS
+      </span>
+      <span class="portal-feature-pill">
+        <i class="fa-solid fa-chart-pie"></i> Real-Time SLS Monitoring
+      </span>
+      <span class="portal-feature-pill">
+        <i class="fa-brands fa-whatsapp"></i> Quick Follow-Up Petugas
+      </span>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Toggle Show/Hide Password
+      const passwordInput = document.getElementById("password");
+      const toggleButton = document.getElementById("togglePassword");
+      const passwordIcon = document.getElementById("passwordIcon");
+
+      toggleButton?.addEventListener("click", () => {
+        const hidden = passwordInput.type === "password";
+        passwordInput.type = hidden ? "text" : "password";
+        passwordIcon.className = hidden ? "fa-regular fa-eye-slash" : "fa-regular fa-eye";
+      });
+
+      // Tab Switching (Masuk Akun <-> Daftar Akun Baru)
+      const tabButtons = document.querySelectorAll(".portal-tab-btn");
+      const tabPanes = document.querySelectorAll(".portal-tab-pane");
+      const headingTitle = document.getElementById("portalHeadingTitle");
+      const headingSubtitle = document.getElementById("portalHeadingSubtitle");
+
+      function activateTab(targetId) {
+        tabButtons.forEach((btn) => {
+          btn.classList.toggle("active", btn.getAttribute("data-target") === targetId);
+        });
+        tabPanes.forEach((pane) => {
+          pane.classList.toggle("active", pane.id === targetId);
+        });
+
+        if (targetId === "pane-register") {
+          headingTitle.textContent = "Daftar Akun Baru";
+          headingSubtitle.textContent =
+            "Pilih role Admin atau User untuk mulai mengakses dashboard monitoring.";
+        } else {
+          headingTitle.textContent = "Portal Monitoring SE2026";
+          headingSubtitle.textContent =
+            "Masuk dengan akun terdaftar atau daftar terlebih dahulu sebelum mengakses sistem.";
+        }
+      }
+
+      tabButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          activateTab(btn.getAttribute("data-target"));
+        });
+      });
+
+      document.querySelectorAll("[data-switch-to]").forEach((link) => {
+        link.addEventListener("click", () => {
+          activateTab(link.getAttribute("data-switch-to"));
+        });
+      });
+    });
+  </script>
+</body>
+</html>

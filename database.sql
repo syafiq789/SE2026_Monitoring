@@ -237,3 +237,21 @@ SELECT k.id AS kecamatan_id, k.kec_code, k.kec_name,
 FROM sls s JOIN kecamatan k ON k.id=s.kecamatan_id JOIN pml pm ON pm.id=s.pml_id JOIN pcl pc ON pc.id=s.pcl_id
 GROUP BY k.id, k.kec_code, k.kec_name;
 
+-- =========================================================
+-- TABEL AUDIT TRAIL & LOG AKTIVITAS (TUGAS AKHIR)
+-- =========================================================
+CREATE TABLE IF NOT EXISTS activity_logs (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id INT UNSIGNED NULL,
+  action VARCHAR(50) NOT NULL,
+  target VARCHAR(100) NULL,
+  ip_address VARCHAR(45) NULL,
+  details TEXT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_activity_user (user_id),
+  KEY idx_activity_action (action),
+  KEY idx_activity_created (created_at),
+  CONSTRAINT fk_activity_user FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

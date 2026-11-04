@@ -1,5 +1,6 @@
-from flask import Blueprint, current_app, flash, redirect, render_template, request, send_file, url_for
+from flask import Blueprint, current_app, flash, redirect, render_template, request, send_file, session, url_for
 
+from services.activity_service import log_activity
 from services.export_service import create_export
 from utils.decorators import admin_required
 from utils.helpers import filters_from_request
@@ -17,6 +18,13 @@ def download():
 def _export(level, file_type):
     try:
         path = create_export(level, file_type, filters_from_request(request.args))
+        log_activity(
+            user_id=session.get("user_id"),
+            action="EXPORT",
+            target=f"{level.upper()}_{file_type.upper()}",
+            details=f"Unduh file: {path.name}",
+            ip_address=request.remote_addr,
+        )
         mimetype = (
             "text/csv; charset=utf-8"
             if file_type == "csv"

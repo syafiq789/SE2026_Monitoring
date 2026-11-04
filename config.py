@@ -72,9 +72,10 @@ class Config:
     ).strip()
 
     DEBUG = env_bool("DEBUG", False)
+    IS_VERCEL = bool(os.getenv("VERCEL"))
 
     # =====================================================
-    # Konfigurasi database MySQL lokal
+    # Konfigurasi database MySQL lokal / Cloud Vercel
     # =====================================================
     DB_HOST = os.getenv(
         "DB_HOST",
@@ -104,11 +105,14 @@ class Config:
     encoded_user = quote_plus(DB_USER)
     encoded_password = quote_plus(DB_PASSWORD)
 
-    DEFAULT_DATABASE_URL = (
-        f"mysql+pymysql://{encoded_user}:{encoded_password}"
-        f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-        f"?charset=utf8mb4"
-    )
+    if IS_VERCEL and not os.getenv("DATABASE_URL") and DB_HOST in {"127.0.0.1", "localhost"}:
+        DEFAULT_DATABASE_URL = "sqlite:////tmp/se2026_monitoring.db"
+    else:
+        DEFAULT_DATABASE_URL = (
+            f"mysql+pymysql://{encoded_user}:{encoded_password}"
+            f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+            f"?charset=utf8mb4"
+        )
 
     DATABASE_URL = normalize_database_url(
         os.getenv(
@@ -146,22 +150,22 @@ class Config:
             "pool_timeout": 30,
         }
 
-    # Dipertahankan karena extensions.py Anda kemungkinan
-    # masih menggunakan nama konfigurasi ini.
     DATABASE_ENGINE_OPTIONS = SQLALCHEMY_ENGINE_OPTIONS
 
     # =====================================================
-    # Folder upload dan export
+    # Folder upload dan export (Gunakan /tmp di Vercel)
     # =====================================================
+    _STORAGE_ROOT = Path("/tmp") if IS_VERCEL else BASE_DIR
+
     UPLOAD_FOLDER = str(
-        BASE_DIR / os.getenv(
+        _STORAGE_ROOT / os.getenv(
             "UPLOAD_FOLDER",
             "uploads",
         )
     )
 
     EXPORT_FOLDER = str(
-        BASE_DIR / os.getenv(
+        _STORAGE_ROOT / os.getenv(
             "EXPORT_FOLDER",
             "exports",
         )
@@ -184,14 +188,11 @@ class Config:
 
     SESSION_COOKIE_HTTPONLY = True
 
-    # Untuk lokal harus False karena masih menggunakan HTTP.
-    # Untuk deployment HTTPS ubah menjadi True melalui .env.
     SESSION_COOKIE_SECURE = env_bool(
         "SESSION_COOKIE_SECURE",
         False,
     )
 
-    # Untuk localhost dan iframe Streamlit lokal gunakan Lax.
     SESSION_COOKIE_SAMESITE = os.getenv(
         "SESSION_COOKIE_SAMESITE",
         "Lax",
@@ -209,5 +210,5 @@ class Config:
         )
     )
 
-    # Refresh masa aktif session ketika pengguna membuka halaman.
     SESSION_REFRESH_EACH_REQUEST = True
+    ALLOW_PUBLIC_REGISTER = env_bool("ALLOW_PUBLIC_REGISTER", True)

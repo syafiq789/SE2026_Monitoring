@@ -1,0 +1,149 @@
+:root {
+  --shadow: none;
+  --border: #ececec;
+
+  --cream-50: #ffffff;
+  --cream-100: #ffffff;
+  --cream-200: #f0f0f0;
+}
+
+body {
+  background: #ffffff;
+}
+
+/* ==================================================
+   SIDEBAR — JADI PUTIH
+================================================== */
+
+.sidebar {
+  border-right: 1px solid #eee;
+  background: #ffffff;
+  color: var(--text-dark);
+}
+
+.brand-copy strong {
+  color: var(--text-dark);
+}
+
+.brand-copy span {
+  color: var(--text-light);
+}
+
+.sidebar-close {
+  color: var(--text-dark);
+}
+
+.sidebar-divider {
+  background: #eee;
+}
+
+.agency-card {
+  color: var(--text-dark);
+  background: var(--orange-100);
+}
+
+.agency-card i {
+  color: var(--orange-600);
+}
+
+.nav-section-title {
+  color: var(--text-light);
+}
+
+.nav-item {
+  color: var(--text-medium);
+}
+
+.nav-item i {
+  display: none;
+}
+
+.nav-item::before {
+  content: "";
+  flex: 0 0 6px;
+  width: 6px;
+  height: 6px;
+  margin-right: 2px;
+  border-radius: 50%;
+  background: var(--text-light);
+}
+
+.nav-item:hover {
+  color: var(--brown-700);
+  background: var(--cream-200);
+  transform: none;
+}
+
+.nav-item.active {
+  color: #ffffff;
+}
+
+.nav-item.active::before {
+  background: #ffffff;
+}
+
+.logout-link {
+  color: var(--text-medium);
+  border: 1px solid #eee;
+}
+
+.logout-link:hover {
+  color: var(--brown-700);
+  background: var(--cream-200);
+}
+
+/* ==================================================
+   TOPBAR
+================================================== */
+
+.topbar {
+  border-bottom: 1px solid #eee;
+  background: #ffffff;
+}
+
+.topbar-left span {
+  color: var(--orange-600);
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.topbar-left strong {
+  color: var(--text-dark);
+  font-size: 13px;
+}
+
+/* ==================================================
+   PAGE HEADING — EYEBROW ORANGE
+================================================== */
+
+.eyebrow.dark {
+  color: var(--orange-600);
+}
+
+/* ==================================================
+   PANELS — HILANGKAN BORDER & SHADOW
+================================================== */
+
+.panel {
+  border: none;
+  box-shadow: none;
+}
+
+.upload-template-info {
+  border-color: #cfe3f5;
+}
+
+/* ==================================================
+   PROCESS LIST — NOMOR POLOS "1. 2. 3."
+================================================== */
+
+.process-list li > span {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.process-list li > span::after {
+  content: ".";
+}

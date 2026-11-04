@@ -61,7 +61,7 @@ class PCL(TimestampMixin, db.Model):
 class SLS(TimestampMixin, db.Model):
     __tablename__ = "sls"
 
-    id = db.Column(db.BigInteger, primary_key=True)
+    id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True, autoincrement=True)
     kecamatan_id = db.Column(
         db.Integer, db.ForeignKey("kecamatan.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False, index=True
     )
@@ -100,4 +100,3 @@ class SLS(TimestampMixin, db.Model):
     kecamatan = db.relationship("Kecamatan", backref=db.backref("sls_list", cascade="all, delete-orphan"))
     pml = db.relationship("PML", backref=db.backref("sls_list", cascade="all, delete-orphan"))
     pcl = db.relationship("PCL", backref=db.backref("sls_list", cascade="all, delete-orphan"))
-

@@ -6,7 +6,7 @@ from extensions import db
 class UploadHistory(db.Model):
     __tablename__ = "upload_history"
 
-    id = db.Column(db.BigInteger, primary_key=True)
+    id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL", onupdate="CASCADE"), index=True)
     original_filename = db.Column(db.String(255), nullable=False)
     stored_filename = db.Column(db.String(255), nullable=False)
@@ -30,4 +30,3 @@ class UploadHistory(db.Model):
     message = db.Column(db.Text)
     uploaded_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
     user = db.relationship("User", backref=db.backref("upload_history", lazy="dynamic"))
-

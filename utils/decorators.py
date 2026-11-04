@@ -1,10 +1,9 @@
 from functools import wraps
 
-from flask import abort, flash, jsonify, redirect, request, session, url_for
+from flask import abort, flash, redirect, request, session, url_for
 
 from extensions import db
 from models.user import User
-from services.token_service import authenticate_bearer_token
 
 
 def _current_user():
@@ -40,17 +39,4 @@ def admin_required(view):
 
     return wrapped
 
-
-def bearer_token_required(view):
-    @wraps(view)
-    def wrapped(*args, **kwargs):
-        auth = request.headers.get("Authorization", "")
-        if not auth.startswith("Bearer "):
-            return jsonify({"error": "Bearer token diperlukan."}), 401
-        token = authenticate_bearer_token(auth[7:].strip())
-        if not token:
-            return jsonify({"error": "Bearer token tidak valid atau sudah kedaluwarsa."}), 401
-        return view(*args, **kwargs)
-
-    return wrapped
 

@@ -1,4 +1,103 @@
 {% extends 'base.html' %}
-{% block title %}Download Data · SE2026{% endblock %}{% block page_id %}download{% endblock %}
-{% block content %}<div class="page-heading"><div><span class="eyebrow dark">Laporan</span><h1>Download Data</h1><p>Export rekap terbaru dalam format Excel terformat atau CSV UTF-8.</p></div></div><div class="download-grid">{% set items=[('sls','Monitoring SLS','Detail setiap Sub-SLS beserta seluruh status workflow','fa-location-dot'),('pcl','Monitoring PCL','Rekap target dan progres menurut pencacah','fa-user-check'),('pml','Monitoring PML','Rekap target dan progres menurut pengawas','fa-people-group'),('kecamatan','Monitoring Kecamatan','Rekap wilayah tingkat kecamatan','fa-map')] %}{% for level,title,desc,icon in items %}<article class="panel download-card"><div class="download-icon"><i class="fa-solid {{ icon }}"></i></div><div><h2>{{ title }}</h2><p>{{ desc }}</p></div><div class="download-actions"><a class="btn btn-light" href="{{ url_for('export.export_' ~ level ~ '_csv') }}"><i class="fa-solid fa-file-csv"></i> CSV</a><a class="btn btn-primary" href="{{ url_for('export.export_' ~ level ~ '_excel') }}"><i class="fa-solid fa-file-excel"></i> Excel</a></div></article>{% endfor %}</div><div class="panel export-note"><i class="fa-solid fa-filter-circle-dollar"></i><div><strong>Butuh export sesuai filter?</strong><p>Buka halaman monitoring terkait, atur filter, lalu gunakan tombol CSV atau Excel di kanan atas.</p></div></div>{% endblock %}
+{% block title %}Download Data · SE2026{% endblock %}
+{% block page_id %}download{% endblock %}
 
+{% block content %}
+<div class="download-page-wrapper">
+  <div class="download-header-section">
+    <span class="download-eyebrow">Laporan</span>
+    <h1 class="download-title">Download Data</h1>
+    <p class="download-subtitle">Export rekap data terbaru dalam Excel terformat atau CSV UTF-8</p>
+  </div>
+
+  <div class="download-cards-container">
+    <!-- Card 1: Monitoring SLS -->
+    <article class="download-card">
+      <div class="download-card-body">
+        <div class="download-card-title-row">
+          <i class="fa-solid fa-location-dot download-icon"></i>
+          <h2>Monitoring SLS</h2>
+        </div>
+        <p class="download-card-desc">Detail setiap Sub-sls beserta seluruh status workflow</p>
+        <div class="download-card-actions">
+          <a class="btn-download btn-csv" href="{{ url_for('export.export_sls_csv') }}">
+            <i class="fa-solid fa-database"></i> CSV
+          </a>
+          <a class="btn-download btn-excel" href="{{ url_for('export.export_sls_excel') }}">
+            <i class="fa-solid fa-file-excel"></i> Excel
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <!-- Card 2: Monitoring PCL -->
+    <article class="download-card">
+      <div class="download-card-body">
+        <div class="download-card-title-row">
+          <i class="fa-solid fa-user-check download-icon"></i>
+          <h2>Monitoring PCL</h2>
+        </div>
+        <p class="download-card-desc">Rekap target dan progres menurut pencacah</p>
+        <div class="download-card-actions">
+          <a class="btn-download btn-csv" href="{{ url_for('export.export_pcl_csv') }}">
+            <i class="fa-solid fa-database"></i> CSV
+          </a>
+          <a class="btn-download btn-excel" href="{{ url_for('export.export_pcl_excel') }}">
+            <i class="fa-solid fa-file-excel"></i> Excel
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <!-- Card 3: Monitoring PML -->
+    <article class="download-card">
+      <div class="download-card-body">
+        <div class="download-card-title-row">
+          <i class="fa-solid fa-people-group download-icon"></i>
+          <h2>Monitoring PML</h2>
+        </div>
+        <p class="download-card-desc">Rekap target dan progres menurut pengawas</p>
+        <div class="download-card-actions">
+          <a class="btn-download btn-csv" href="{{ url_for('export.export_pml_csv') }}">
+            <i class="fa-solid fa-database"></i> CSV
+          </a>
+          <a class="btn-download btn-excel" href="{{ url_for('export.export_pml_excel') }}">
+            <i class="fa-solid fa-file-excel"></i> Excel
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <!-- Card 4: Monitoring Kecamatan -->
+    <article class="download-card">
+      <div class="download-card-body">
+        <div class="download-card-title-row">
+          <i class="fa-solid fa-map download-icon"></i>
+          <h2>Monitoring Kecamatan</h2>
+        </div>
+        <p class="download-card-desc">Rekap wilayah tingkat kecamatan</p>
+        <div class="download-card-actions">
+          <a class="btn-download btn-csv" href="{{ url_for('export.export_kecamatan_csv') }}">
+            <i class="fa-solid fa-database"></i> CSV
+          </a>
+          <a class="btn-download btn-excel" href="{{ url_for('export.export_kecamatan_excel') }}">
+            <i class="fa-solid fa-file-excel"></i> Excel
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <!-- Card 5: Info Filter -->
+    <article class="download-card info-card">
+      <div class="download-card-body">
+        <div class="download-card-title-row">
+          <i class="fa-solid fa-filter download-icon"></i>
+          <h2>Butuh export sesuai filter?</h2>
+        </div>
+        <p class="download-card-desc">Buka halaman monitoring terkait, atau filter, lalu gunakan tombol CSV atau Excel
+          di kanan atas</p>
+      </div>
+    </article>
+  </div>
+</div>
+{% endblock %}

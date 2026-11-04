@@ -2,9 +2,7 @@ from flask import Blueprint, flash, redirect, render_template, request, session,
 from sqlalchemy.exc import IntegrityError
 
 from extensions import db
-from models.api_token import ApiToken
 from models.user import User
-from services.token_service import create_api_token
 from utils.decorators import admin_required
 
 
@@ -56,34 +54,4 @@ def toggle_user(user_id):
         flash("Status pengguna diperbarui.", "success")
     return redirect(url_for("users.users"))
 
-
-@user_bp.route("/api/tokens")
-@admin_required
-def api_tokens():
-    tokens = ApiToken.query.order_by(ApiToken.created_at.desc()).all()
-    return render_template("api_tokens.html", tokens=tokens, new_token=None)
-
-
-@user_bp.route("/api/tokens/create", methods=["POST"])
-@admin_required
-def api_token_create():
-    name = request.form.get("name", "").strip()
-    expires_days = request.form.get("expires_days", type=int)
-    if not name:
-        flash("Nama token wajib diisi.", "danger")
-        return redirect(url_for("users.api_tokens"))
-    _token, raw = create_api_token(session["user_id"], name, expires_days if expires_days and expires_days > 0 else None)
-    tokens = ApiToken.query.order_by(ApiToken.created_at.desc()).all()
-    flash("Token dibuat. Salin sekarang karena token tidak akan ditampilkan lagi.", "success")
-    return render_template("api_tokens.html", tokens=tokens, new_token=raw)
-
-
-@user_bp.route("/api/tokens/<int:token_id>/revoke", methods=["POST"])
-@admin_required
-def api_token_revoke(token_id):
-    token = db.get_or_404(ApiToken, token_id)
-    token.is_active = False
-    db.session.commit()
-    flash("Token dinonaktifkan.", "success")
-    return redirect(url_for("users.api_tokens"))
 

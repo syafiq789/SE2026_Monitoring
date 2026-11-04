@@ -1,0 +1,620 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import progress_bar %}
+{% block title %}Tindak Lanjut & Broadcast Pengingat · SE2026{% endblock %}
+{% block page_id %}tindak-lanjut{% endblock %}
+
+{% block head %}
+<style>
+  .followup-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .followup-kpi-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.25rem;
+    border: 1px solid rgba(124, 74, 33, 0.14);
+    box-shadow: 0 4px 14px rgba(58, 34, 16, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .followup-kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+  .followup-kpi-icon.danger {
+    background: rgba(191, 63, 50, 0.12);
+    color: #bf3f32;
+  }
+  .followup-kpi-icon.warning {
+    background: rgba(219, 166, 58, 0.16);
+    color: #b7791f;
+  }
+  .followup-kpi-icon.primary {
+    background: rgba(140, 74, 39, 0.12);
+    color: #8c4a27;
+  }
+  .followup-kpi-icon.success {
+    background: rgba(37, 131, 91, 0.12);
+    color: #25835b;
+  }
+  .followup-kpi-meta span {
+    display: block;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #7c6755;
+    font-weight: 600;
+  }
+  .followup-kpi-meta strong {
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: #2c1a0e;
+    line-height: 1.2;
+  }
+  .followup-kpi-meta small {
+    display: block;
+    font-size: 0.78rem;
+    color: #8a7563;
+  }
+  .broadcast-box {
+    background: linear-gradient(135deg, #fffdf9 0%, #f9f2e7 100%);
+    border: 1px solid rgba(140, 74, 39, 0.22);
+    border-radius: 14px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .broadcast-textarea {
+    font-family: 'Inter', monospace;
+    font-size: 0.86rem;
+    background: #fff;
+    border: 1px solid rgba(140, 74, 39, 0.25);
+    border-radius: 10px;
+    line-height: 1.55;
+  }
+  .action-btn-group {
+    display: inline-flex;
+    gap: 0.38rem;
+    flex-wrap: nowrap;
+  }
+  .btn-wa {
+    background-color: #1f8e4c;
+    color: #fff;
+    border: none;
+  }
+  .btn-wa:hover {
+    background-color: #18733d;
+    color: #fff;
+  }
+  .priority-pill {
+    display: inline-block;
+    padding: 0.28rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .priority-pill.danger {
+    background: rgba(191, 63, 50, 0.14);
+    color: #a82e22;
+  }
+  .priority-pill.warning {
+    background: rgba(219, 166, 58, 0.2);
+    color: #8f5e0c;
+  }
+  .priority-pill.info {
+    background: rgba(43, 122, 184, 0.14);
+    color: #1f5f91;
+  }
+  .priority-pill.success {
+    background: rgba(37, 131, 91, 0.15);
+    color: #1d6b49;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-heading">
+  <div>
+    <span class="eyebrow dark">Koordinasi & Aksi Cepat Lapangan</span>
+    <h1>Tindak Lanjut & Broadcast Pengingat</h1>
+    <p>Kirim pengingat progres otomatis ke PCL/PML via WhatsApp atau Email serta buat rekap broadcast grup Kecamatan dalam 1 klik.</p>
+  </div>
+  <div class="button-group">
+    <a class="btn btn-outline-primary" href="{{ url_for('monitoring.monitoring_pcl') }}">
+      <i class="fa-solid fa-user-check me-1"></i> Monitoring PCL
+    </a>
+    <a class="btn btn-outline-primary" href="{{ url_for('monitoring.monitoring_pml') }}">
+      <i class="fa-solid fa-people-group me-1"></i> Monitoring PML
+    </a>
+  </div>
+</div>
+
+<!-- 4 KARTU METRIK TINDAK LANJUT -->
+<section class="followup-kpi-grid">
+  <div class="followup-kpi-card">
+    <div class="followup-kpi-icon danger">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+    </div>
+    <div class="followup-kpi-meta">
+      <span>PCL Belum Mulai (0%)</span>
+      <strong>{{ summary.pcl_belum_mulai }}</strong>
+      <small>Dari total {{ summary.total_pcl }} PCL terpantau</small>
+    </div>
+  </div>
+
+  <div class="followup-kpi-card">
+    <div class="followup-kpi-icon warning">
+      <i class="fa-solid fa-bolt"></i>
+    </div>
+    <div class="followup-kpi-meta">
+      <span>PCL Perlu Akselerasi (&lt;50%)</span>
+      <strong>{{ summary.pcl_kritis }}</strong>
+      <small>Progres sudah berjalan tapi &lt; 50%</small>
+    </div>
+  </div>
+
+  <div class="followup-kpi-card">
+    <div class="followup-kpi-icon primary">
+      <i class="fa-solid fa-file-pen"></i>
+    </div>
+    <div class="followup-kpi-meta">
+      <span>Tertahan di Status DRAFT</span>
+      <strong>{{ summary.total_draft_tertahan }}</strong>
+      <small>Usaha belum disubmit oleh PCL</small>
+    </div>
+  </div>
+
+  <div class="followup-kpi-card">
+    <div class="followup-kpi-icon success">
+      <i class="fa-solid fa-user-clock"></i>
+    </div>
+    <div class="followup-kpi-meta">
+      <span>Antrean Verifikasi PML</span>
+      <strong>{{ summary.total_pending_approval }}</strong>
+      <small>Sudah diunggah, menunggu Approved PML</small>
+    </div>
+  </div>
+</section>
+
+<!-- FILTER BAR -->
+<article class="panel filter-panel mb-4">
+  <form method="get" action="{{ url_for('followup.tindak_lanjut') }}" class="row g-3 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label fw-semibold">Kecamatan</label>
+      <select name="kec_code" class="form-select">
+        <option value="">Semua Kecamatan (25)</option>
+        {% for item in filter_options.kecamatan %}
+          <option value="{{ item.code }}" {% if filters.kec_code == item.code %}selected{% endif %}>
+            {{ item.code }} - {{ item.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label fw-semibold">Target Petugas</label>
+      <select name="role_type" class="form-select">
+        <option value="pcl" {% if filters.role_type == 'pcl' %}selected{% endif %}>Pencacah (PCL)</option>
+        <option value="pml" {% if filters.role_type == 'pml' %}selected{% endif %}>Pengawas (PML)</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label fw-semibold">Filter Prioritas</label>
+      <select name="priority" class="form-select">
+        <option value="">Semua Kategori Prioritas</option>
+        <option value="belum_mulai" {% if filters.priority == 'belum_mulai' %}selected{% endif %}>Belum Mulai (0%)</option>
+        <option value="kritis" {% if filters.priority == 'kritis' %}selected{% endif %}>Perlu Akselerasi (&lt;50%)</option>
+        <option value="moderat" {% if filters.priority == 'moderat' %}selected{% endif %}>Perlu Dorongan (50-79%)</option>
+        <option value="draft" {% if filters.priority == 'draft' %}selected{% endif %}>Memiliki Dokumen DRAFT</option>
+        <option value="pending_approval" {% if filters.priority == 'pending_approval' %}selected{% endif %}>Ada Antrean Approval PML</option>
+        <option value="selesai" {% if filters.priority == 'selesai' %}selected{% endif %}>Sudah Selesai (100%)</option>
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label fw-semibold">Cari Nama / Email</label>
+      <input
+        type="text"
+        name="q"
+        value="{{ filters.q }}"
+        class="form-control"
+        placeholder="Ketik nama..."
+      >
+    </div>
+
+    <div class="col-md-2 d-flex gap-2">
+      <button type="submit" class="btn btn-primary w-100">
+        <i class="fa-solid fa-filter me-1"></i> Terapkan
+      </button>
+      <a href="{{ url_for('followup.tindak_lanjut') }}" class="btn btn-outline-secondary" title="Reset Filter">
+        <i class="fa-solid fa-rotate-left"></i>
+      </a>
+    </div>
+  </form>
+</article>
+
+<!-- PANEL BROADCAST GRUP WHATSAPP KECAMATAN -->
+<section class="broadcast-box">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+    <div>
+      <span class="badge bg-warning text-dark mb-1">
+        <i class="fa-solid fa-bullhorn me-1"></i> Template Broadcast Grup WA
+      </span>
+      <h5 class="mb-0 fw-bold">Rekap Koordinasi — {{ kec_label }}</h5>
+      <small class="text-muted">Siap ditempelkan langsung ke Grup WhatsApp Koordinasi Kecamatan / PML-PCL.</small>
+    </div>
+    <div class="d-flex gap-2">
+      <button
+        type="button"
+        class="btn btn-outline-dark btn-sm"
+        id="btnCopyBroadcast"
+      >
+        <i class="fa-regular fa-copy me-1"></i> Salin Teks Broadcast
+      </button>
+      <a
+        href="{{ broadcast_wa_url }}"
+        target="_blank"
+        rel="noopener"
+        class="btn btn-wa btn-sm"
+        id="btnSendBroadcastWa"
+      >
+        <i class="fa-brands fa-whatsapp me-1"></i> Kirim ke Grup WhatsApp
+      </a>
+    </div>
+  </div>
+  <textarea
+    id="broadcastTextArea"
+    class="form-control broadcast-textarea"
+    rows="6"
+  >{{ broadcast_text }}</textarea>
+</section>
+
+<!-- TABEL DAFTAR TINDAK LANJUT PETUGAS -->
+<article class="panel table-panel">
+  <div class="panel-title">
+    <div>
+      <span>Daftar pengingat individu</span>
+      <h2>
+        {% if filters.role_type == 'pml' %}
+          Daftar Tindak Lanjut Pengawas (PML)
+        {% else %}
+          Daftar Tindak Lanjut Pencacah (PCL)
+        {% endif %}
+      </h2>
+    </div>
+    <span class="record-count">{{ rows|length }} petugas</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table data-table align-middle">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Kecamatan</th>
+          {% if filters.role_type == 'pml' %}
+            <th>Nama PML</th>
+            <th>Email PML</th>
+            <th>Cakupan</th>
+          {% else %}
+            <th>Nama PCL</th>
+            <th>Pengawas (PML)</th>
+            <th>Kontak / Email</th>
+          {% endif %}
+          <th>Target</th>
+          <th>Sudah Upload</th>
+          <th>Belum Upload</th>
+          <th>Draft</th>
+          <th>Antrean Approval</th>
+          <th>Progress</th>
+          <th>Prioritas</th>
+          <th class="text-center">Tindak Lanjut (1-Klik)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>
+              <span class="code-pill">{{ row.kec_code }}</span>
+              <div class="small fw-semibold mt-1">{{ row.kec_name }}</div>
+            </td>
+
+            {% if filters.role_type == 'pml' %}
+              <td class="fw-bold">{{ row.nama_pml }}</td>
+              <td>
+                {% if row.email_pml %}
+                  <span class="small text-muted">{{ row.email_pml }}</span>
+                {% else %}
+                  <span class="small text-muted">-</span>
+                {% endif %}
+              </td>
+              <td>{{ row.jumlah_pcl }} PCL ({{ row.jumlah_sls }} SLS)</td>
+            {% else %}
+              <td>
+                <div class="fw-bold">{{ row.nama_pcl }}</div>
+                {% if row.username_pcl %}
+                  <small class="text-muted">@{{ row.username_pcl }}</small>
+                {% endif %}
+              </td>
+              <td>{{ row.nama_pml }}</td>
+              <td>
+                {% if row.email_pcl %}
+                  <span class="small text-muted">{{ row.email_pcl }}</span>
+                {% else %}
+                  <span class="small text-muted">-</span>
+                {% endif %}
+              </td>
+            {% endif %}
+
+            <td>{{ row.total_target }}</td>
+            <td class="text-success fw-semibold">{{ row.processed_count }}</td>
+            <td class="text-danger fw-semibold">{{ row.remaining_count }}</td>
+            <td>
+              {% if row.draft_count > 0 %}
+                <span class="badge bg-warning text-dark">{{ row.draft_count }}</span>
+              {% else %}
+                0
+              {% endif %}
+            </td>
+            <td>
+              {% if row.pending_approval > 0 %}
+                <span class="badge bg-info text-dark">{{ row.pending_approval }}</span>
+              {% else %}
+                0
+              {% endif %}
+            </td>
+            <td class="progress-cell">{{ progress_bar(row.progress) }}</td>
+            <td>
+              <span class="priority-pill {{ row.priority.badge }}">
+                {{ row.priority.label }}
+              </span>
+            </td>
+            <td class="text-center">
+              <div class="action-btn-group">
+                <button
+                  type="button"
+                  class="btn btn-wa btn-sm btn-open-wa-modal"
+                  title="Kirim Pengingat WhatsApp"
+                  data-name="{{ row.nama_pml if filters.role_type == 'pml' else row.nama_pcl }}"
+                  data-kec="{{ row.kec_name }}"
+                  data-progress="{{ '%.2f'|format(row.progress) }}"
+                  data-message="{{ row.reminder_message }}"
+                >
+                  <i class="fa-brands fa-whatsapp"></i> WA
+                </button>
+
+                <a
+                  href="{{ row.mailto_url }}"
+                  class="btn btn-outline-primary btn-sm btn-log-email"
+                  title="Kirim Email Pengingat"
+                  data-name="{{ row.nama_pml if filters.role_type == 'pml' else row.nama_pcl }}"
+                  data-kec="{{ row.kec_name }}"
+                  data-progress="{{ '%.2f'|format(row.progress) }}"
+                >
+                  <i class="fa-regular fa-envelope"></i>
+                </a>
+
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm btn-copy-single"
+                  title="Salin Teks Pengingat"
+                  data-name="{{ row.nama_pml if filters.role_type == 'pml' else row.nama_pcl }}"
+                  data-kec="{{ row.kec_name }}"
+                  data-progress="{{ '%.2f'|format(row.progress) }}"
+                  data-message="{{ row.reminder_message }}"
+                >
+                  <i class="fa-regular fa-copy"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="12" class="text-center py-4 text-muted">
+              Tidak ada data petugas yang sesuai dengan filter saat ini.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</article>
+
+<!-- MODAL KIRIM WHATSAPP & KUSTOMISASI PESAN -->
+<div class="modal fade" id="waFollowupModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title fw-bold mb-0">
+            <i class="fa-brands fa-whatsapp text-success me-1"></i>
+            Kirim Pengingat WhatsApp — <span id="modalTargetName">Petugas</span>
+          </h5>
+          <small class="text-muted">Anda dapat mengisi nomor tujuan (opsional) atau langsung memilih kontak/grup di WhatsApp.</small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Nomor WhatsApp Tujuan (Opsional)</label>
+          <input
+            type="text"
+            id="modalPhoneInput"
+            class="form-control"
+            placeholder="Contoh: 081234567890 (Kosongkan jika ingin pilih kontak langsung di aplikasi WA)"
+          >
+        </div>
+        <div class="mb-2">
+          <label class="form-label fw-semibold">Isi Pesan Pengingat Otomatis (Dapat Diedit)</label>
+          <textarea
+            id="modalMessageInput"
+            class="form-control broadcast-textarea"
+            rows="10"
+          ></textarea>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <button type="button" class="btn btn-outline-secondary" id="modalBtnCopy">
+          <i class="fa-regular fa-copy me-1"></i> Salin Pesan Saja
+        </button>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+          <button type="button" class="btn btn-wa" id="modalBtnSendWa">
+            <i class="fa-brands fa-whatsapp me-1"></i> Buka WhatsApp & Kirim
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST NOTIFIKASI -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1090">
+  <div id="followupToast" class="toast align-items-center text-bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body" id="followupToastBody">
+        Pesan berhasil disalin ke clipboard!
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const toastEl = document.getElementById("followupToast");
+    const toastBody = document.getElementById("followupToastBody");
+    const toast = toastEl ? new bootstrap.Toast(toastEl, { delay: 2800 }) : null;
+
+    function showToast(msg) {
+      if (toastBody && toast) {
+        toastBody.textContent = msg;
+        toast.show();
+      }
+    }
+
+    function logFollowupAction(channel, targetName, kecName, progress) {
+      fetch("/api/followup/log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel: channel,
+          target_name: targetName,
+          kec_name: kecName,
+          progress: progress,
+        }),
+      }).catch(() => {});
+    }
+
+    function normalizePhone(raw) {
+      let digits = (raw || "").replace(/\D+/g, "");
+      if (digits.startsWith("0")) {
+        digits = "62" + digits.slice(1);
+      } else if (digits.startsWith("8")) {
+        digits = "62" + digits;
+      }
+      return digits;
+    }
+
+    // Salin Broadcast Kecamatan
+    const btnCopyBroadcast = document.getElementById("btnCopyBroadcast");
+    const broadcastTextArea = document.getElementById("broadcastTextArea");
+    btnCopyBroadcast?.addEventListener("click", () => {
+      navigator.clipboard.writeText(broadcastTextArea.value || "").then(() => {
+        showToast("Teks broadcast grup Kecamatan berhasil disalin!");
+        logFollowupAction("BROADCAST_COPY", "{{ kec_label }}", "{{ kec_label }}", null);
+      });
+    });
+
+    const btnSendBroadcastWa = document.getElementById("btnSendBroadcastWa");
+    btnSendBroadcastWa?.addEventListener("click", (e) => {
+      e.preventDefault();
+      const text = encodeURIComponent(broadcastTextArea.value || "");
+      logFollowupAction("BROADCAST_WA", "{{ kec_label }}", "{{ kec_label }}", null);
+      window.open(`https://wa.me/?text=${text}`, "_blank", "noopener");
+    });
+
+    // Salin Pesan Individu
+    document.querySelectorAll(".btn-copy-single").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const msg = btn.getAttribute("data-message") || "";
+        const name = btn.getAttribute("data-name") || "Petugas";
+        const kec = btn.getAttribute("data-kec") || "-";
+        const progress = btn.getAttribute("data-progress") || "0";
+        navigator.clipboard.writeText(msg).then(() => {
+          showToast(`Pesan pengingat untuk ${name} berhasil disalin!`);
+          logFollowupAction("COPY", name, kec, progress);
+        });
+      });
+    });
+
+    // Log Email
+    document.querySelectorAll(".btn-log-email").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const name = btn.getAttribute("data-name") || "Petugas";
+        const kec = btn.getAttribute("data-kec") || "-";
+        const progress = btn.getAttribute("data-progress") || "0";
+        logFollowupAction("EMAIL", name, kec, progress);
+      });
+    });
+
+    // Modal WA Individu
+    const waModalEl = document.getElementById("waFollowupModal");
+    const waModal = waModalEl ? new bootstrap.Modal(waModalEl) : null;
+    const modalTargetName = document.getElementById("modalTargetName");
+    const modalPhoneInput = document.getElementById("modalPhoneInput");
+    const modalMessageInput = document.getElementById("modalMessageInput");
+    const modalBtnSendWa = document.getElementById("modalBtnSendWa");
+    const modalBtnCopy = document.getElementById("modalBtnCopy");
+
+    let activeTarget = { name: "", kec: "", progress: "" };
+
+    document.querySelectorAll(".btn-open-wa-modal").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        activeTarget = {
+          name: btn.getAttribute("data-name") || "Petugas",
+          kec: btn.getAttribute("data-kec") || "-",
+          progress: btn.getAttribute("data-progress") || "0",
+        };
+        modalTargetName.textContent = activeTarget.name;
+        modalMessageInput.value = btn.getAttribute("data-message") || "";
+        modalPhoneInput.value = "";
+        waModal?.show();
+      });
+    });
+
+    modalBtnCopy?.addEventListener("click", () => {
+      navigator.clipboard.writeText(modalMessageInput.value || "").then(() => {
+        showToast(`Pesan untuk ${activeTarget.name} berhasil disalin!`);
+        logFollowupAction("COPY", activeTarget.name, activeTarget.kec, activeTarget.progress);
+      });
+    });
+
+    modalBtnSendWa?.addEventListener("click", () => {
+      const phone = normalizePhone(modalPhoneInput.value);
+      const encodedText = encodeURIComponent(modalMessageInput.value || "");
+      const url = phone
+        ? `https://wa.me/${phone}?text=${encodedText}`
+        : `https://wa.me/?text=${encodedText}`;
+
+      logFollowupAction("WHATSAPP", activeTarget.name, activeTarget.kec, activeTarget.progress);
+      window.open(url, "_blank", "noopener");
+      waModal?.hide();
+    });
+  });
+</script>
+{% endblock %}
+

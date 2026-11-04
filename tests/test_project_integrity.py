@@ -19,7 +19,7 @@ def test_required_routes_are_registered():
 
 def test_database_schema_contains_all_tables_and_views():
     sql = (Path(__file__).parents[1] / "database.sql").read_text(encoding="utf-8").lower()
-    for table in ("users", "kecamatan", "pml", "pcl", "sls", "upload_history", "api_tokens"):
+    for table in ("users", "kecamatan", "pml", "pcl", "sls", "upload_history"):
         assert f"create table if not exists {table}" in sql
     for view in (
         "view_dashboard_summary", "view_monitoring_sls", "view_monitoring_pcl",

@@ -1,4 +1,51 @@
 {% extends 'base.html' %}
 {% block title %}Riwayat Upload · SE2026{% endblock %}{% block page_id %}history{% endblock %}
-{% block content %}<div class="page-heading"><div><span class="eyebrow dark">Audit data</span><h1>Riwayat Upload</h1><p>Catatan hasil setiap percobaan import file SLS.</p></div><a class="btn btn-primary" href="{{ url_for('upload.upload') }}"><i class="fa-solid fa-plus"></i> Upload Baru</a></div><article class="panel table-panel"><div class="table-responsive"><table class="table data-table align-middle"><thead><tr><th>No</th><th>Waktu</th><th>File</th><th>Sheet</th><th>Pengunggah</th><th>Baris Sumber</th><th>Diimport</th><th>Duplikat</th><th>Peringatan</th><th>Total Target</th><th>Progress</th><th>Status</th><th>Pesan</th></tr></thead><tbody>{% for item in histories %}<tr><td>{{ loop.index }}</td><td data-order="{{ item.uploaded_at.isoformat() }}">{{ item.uploaded_at.strftime('%d-%m-%Y %H:%M:%S') }}</td><td><strong>{{ item.original_filename }}</strong><small class="d-block text-muted">{{ '%.2f'|format(item.file_size / 1048576) }} MB</small></td><td>{{ item.processed_sheet or '-' }}</td><td>{{ item.user.nama_lengkap if item.user else '-' }}</td><td>{{ item.source_rows }}</td><td>{{ item.imported_rows }}</td><td>{{ item.duplicate_rows }}</td><td>{{ item.warning_count }}</td><td>{{ item.total_target }}</td><td>{{ '%.2f'|format(item.progress) }}%</td><td><span class="badge text-bg-{{ 'success' if item.status == 'success' else ('danger' if item.status == 'failed' else 'warning') }}">{{ item.status }}</span></td><td><span class="message-cell" title="{{ item.message }}">{{ item.message or '-' }}</span></td></tr>{% endfor %}</tbody></table></div></article>{% endblock %}
-
+{% block content %}<div class="page-heading">
+    <div><span class="eyebrow dark">Audit data</span>
+        <h1>Riwayat Upload</h1>
+        <p>Catatan hasil setiap percobaan import file SLS.</p>
+    </div><a class="btn btn-primary" href="{{ url_for('upload.upload') }}"><i class="fa-solid fa-plus"></i> Upload
+        Baru</a>
+</div>
+<article class="panel table-panel">
+    <div class="table-responsive">
+        <table class="table data-table align-middle">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Waktu</th>
+                    <th>File</th>
+                    <th>Sheet</th>
+                    <th>Pengunggah</th>
+                    <th>Baris Sumber</th>
+                    <th>Diimport</th>
+                    <th>Duplikat</th>
+                    <th>Peringatan</th>
+                    <th>Total Target</th>
+                    <th>Progress</th>
+                    <th>Status</th>
+                    <th>Pesan</th>
+                </tr>
+            </thead>
+            <tbody>{% for item in histories %}<tr>
+                    <td>{{ loop.index }}</td>
+                    <td data-order="{{ item.uploaded_at.isoformat() }}">{{ item.uploaded_at.strftime('%d-%m-%Y
+                        %H:%M:%S') }}</td>
+                    <td><strong>{{ item.original_filename }}</strong><small class="d-block text-muted">{{
+                            '%.2f'|format(item.file_size / 1048576) }} MB</small></td>
+                    <td>{{ item.processed_sheet or '-' }}</td>
+                    <td>{{ item.user.nama_lengkap if item.user else '-' }}</td>
+                    <td>{{ item.source_rows }}</td>
+                    <td>{{ item.imported_rows }}</td>
+                    <td>{{ item.duplicate_rows }}</td>
+                    <td>{{ item.warning_count }}</td>
+                    <td>{{ item.total_target }}</td>
+                    <td>{{ '%.2f'|format(item.progress) }}%</td>
+                    <td><span
+                            class="badge text-bg-{{ 'success' if item.status == 'success' else ('danger' if item.status == 'failed' else 'warning') }}">{{
+                            item.status }}</span></td>
+                    <td><span class="message-cell" title="{{ item.message }}">{{ item.message or '-' }}</span></td>
+                </tr>{% endfor %}</tbody>
+        </table>
+    </div>
+</article>{% endblock %}

@@ -1,0 +1,305 @@
+/* ==================================================
+   UPLOAD PAGE — TEMPLATE INFO BOX
+================================================== */
+
+.upload-template-info {
+  margin-bottom: 20px;
+  padding: 18px 20px;
+
+  border: 1px solid #cfe3f5;
+  border-radius: 14px;
+  background: #eef6ff;
+}
+
+.upload-template-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  margin-bottom: 14px;
+}
+
+.upload-template-title > i {
+  flex: 0 0 auto;
+  margin-top: 2px;
+
+  color: #2f7fd1;
+  font-size: 15px;
+}
+
+.upload-template-title > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.upload-template-title strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.upload-template-title span {
+  font-size: 12px;
+  color: var(--text-medium);
+  line-height: 1.5;
+}
+
+.upload-template-columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+
+  margin-bottom: 14px;
+}
+
+.upload-template-columns code {
+  padding: 4px 9px;
+
+  font-size: 10.5px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  color: #2f5f92;
+
+  border: 1px solid #cfe3f5;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.upload-template-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-bottom: 14px;
+
+  font-size: 11.5px;
+  color: var(--text-medium);
+}
+
+.upload-template-note i {
+  color: #2f7fd1;
+  font-size: 12px;
+}
+
+.btn-template-download {
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--text-dark);
+}
+
+.btn-template-download:hover {
+  background: var(--cream-100);
+}
+
+/* ==================================================
+   UPLOAD PAGE — LAYOUT
+================================================== */
+
+.upload-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+
+  align-items: start;
+}
+
+.upload-card,
+.guidance-card {
+  padding: 26px;
+}
+
+/* ==================================================
+   UPLOAD CARD (FORM)
+================================================== */
+
+.upload-icon {
+  display: grid;
+  place-items: center;
+
+  width: 46px;
+  height: 46px;
+  margin-bottom: 14px;
+
+  color: #ffffff;
+  font-size: 18px;
+
+  border-radius: 13px;
+  background: var(--orange-600);
+}
+
+.upload-card h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.upload-card > p {
+  margin: 0 0 20px;
+  font-size: 12px;
+  color: var(--text-medium);
+}
+
+.drop-zone {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 34px 18px;
+  margin-bottom: 16px;
+
+  text-align: center;
+  cursor: pointer;
+
+  border: 2px dashed #d9cec3;
+  border-radius: 14px;
+  background: var(--cream-50);
+
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.drop-zone:hover,
+.drop-zone.dragging {
+  border-color: var(--orange-600);
+  background: var(--orange-100);
+}
+
+.drop-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  opacity: 0;
+  cursor: pointer;
+}
+
+.drop-zone i {
+  font-size: 26px;
+  color: var(--orange-600);
+}
+
+.drop-zone strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.drop-zone span {
+  font-size: 11.5px;
+  color: var(--text-light);
+}
+
+.upload-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-top: 14px;
+  padding: 12px 14px;
+
+  font-size: 11.5px;
+  color: var(--brown-700);
+  line-height: 1.5;
+
+  border-radius: 10px;
+  background: var(--orange-100);
+}
+
+.upload-progress .spinner-border {
+  flex: 0 0 auto;
+  color: var(--orange-600);
+}
+
+.w-100 {
+  width: 100%;
+}
+
+/* ==================================================
+   GUIDANCE CARD (KETENTUAN IMPORT)
+================================================== */
+
+.guidance-card h2 {
+  margin: 4px 0 18px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.process-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  margin: 0 0 18px;
+  padding: 0;
+
+  list-style: none;
+}
+
+.process-list li {
+  display: flex;
+  gap: 14px;
+}
+
+.process-list li > span {
+  flex: 0 0 auto;
+
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.process-list li > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.process-list strong {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.process-list p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-medium);
+}
+
+.info-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+
+  padding: 12px 14px;
+
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--brown-700);
+
+  border-radius: 10px;
+  background: var(--orange-100);
+}
+
+.info-note i {
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+/* ==================================================
+   RESPONSIVE (override tambahan agar sinkron dengan responsive.css)
+================================================== */
+
+@media (max-width: 767.98px) {
+  .upload-template-columns {
+    gap: 6px;
+  }
+}

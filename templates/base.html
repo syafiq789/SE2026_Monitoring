@@ -1,85 +1,329 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Dashboard Monitoring Sensus Ekonomi 2026 BPS Kabupaten Banyuwangi">
-  <title>{% block title %}SE2026 Monitoring{% endblock %}</title>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/2.1.3/css/dataTables.bootstrap5.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.2/css/responsive.bootstrap5.css">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>
+    {% block title %}SE2026 Monitoring{% endblock %}
+  </title>
+
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- Bootstrap -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  >
+
+  <!-- Font Awesome -->
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    rel="stylesheet"
+  >
+
+  <!-- CSS utama project -->
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/style.css') }}?v=42"
+  >
+
+  <!-- CSS khusus halaman upload -->
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/upload-page.css') }}?v=1"
+  >
+
   {% block head %}{% endblock %}
 </head>
-<body data-page="{% block page_id %}default{% endblock %}">
-{% if current_user %}
-  <aside class="sidebar" id="sidebar">
-    <div class="brand-block">
-      <div class="brand-emblem" aria-hidden="true">SE<span>26</span></div>
-      <div><strong>SE2026</strong><small>Monitoring</small></div>
-    </div>
-    <div class="agency"><i class="fa-solid fa-chart-column"></i><span>BPS Kabupaten<br>Banyuwangi</span></div>
-    <nav class="sidebar-nav" aria-label="Navigasi utama">
-      <a class="nav-link {{ 'active' if request.endpoint == 'dashboard.dashboard' }}" href="{{ url_for('dashboard.dashboard') }}"><i class="fa-solid fa-grid-2"></i> Dashboard</a>
-      <div class="nav-label">Monitoring</div>
-      <a class="nav-link {{ 'active' if request.endpoint == 'monitoring.monitoring_sls' }}" href="{{ url_for('monitoring.monitoring_sls') }}"><i class="fa-solid fa-location-dot"></i> Monitoring SLS</a>
-      <a class="nav-link {{ 'active' if request.endpoint == 'monitoring.monitoring_pcl' }}" href="{{ url_for('monitoring.monitoring_pcl') }}"><i class="fa-solid fa-user-check"></i> Monitoring PCL</a>
-      <a class="nav-link {{ 'active' if request.endpoint == 'monitoring.monitoring_pml' }}" href="{{ url_for('monitoring.monitoring_pml') }}"><i class="fa-solid fa-people-group"></i> Monitoring PML</a>
-      <a class="nav-link {{ 'active' if request.endpoint == 'monitoring.monitoring_kecamatan' }}" href="{{ url_for('monitoring.monitoring_kecamatan') }}"><i class="fa-solid fa-map"></i> Monitoring Kecamatan</a>
-      {% if current_user.role == 'admin' %}
-      <div class="nav-label">Administrasi</div>
-      <a class="nav-link {{ 'active' if request.endpoint == 'upload.upload' }}" href="{{ url_for('upload.upload') }}"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Data SLS</a>
-      <a class="nav-link {{ 'active' if request.endpoint == 'export.download' }}" href="{{ url_for('export.download') }}"><i class="fa-solid fa-file-export"></i> Download Data</a>
-      <a class="nav-link {{ 'active' if request.endpoint == 'upload.upload_history' }}" href="{{ url_for('upload.upload_history') }}"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Upload</a>
-      <a class="nav-link {{ 'active' if request.endpoint in ['users.users','users.admin_register'] }}" href="{{ url_for('users.users') }}"><i class="fa-solid fa-users-gear"></i> Manajemen User</a>
-      <a class="nav-link {{ 'active' if request.endpoint == 'users.api_tokens' }}" href="{{ url_for('users.api_tokens') }}"><i class="fa-solid fa-key"></i> API Token</a>
-      {% endif %}
-    </nav>
-    <a class="nav-link logout-link" href="{{ url_for('auth.logout') }}"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a>
-  </aside>
-  <main class="app-main">
-    <header class="topbar">
-      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Buka atau tutup navigasi"><i class="fa-solid fa-bars"></i></button>
-      <div><p>Dashboard Monitoring</p><strong>Sensus Ekonomi 2026</strong></div>
-      <div class="user-chip"><span class="avatar">{{ current_user.nama_lengkap[:1]|upper }}</span><span><strong>{{ current_user.nama_lengkap }}</strong><small>{{ current_user.role|upper }}</small></span></div>
-    </header>
-    <section class="content-area">
-{% else %}
-  <main class="auth-shell">
-{% endif %}
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <div class="flash-stack">
-          {% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
-              {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>
-            </div>
-          {% endfor %}
-          </div>
+
+<body data-page="{% block page_id %}{% endblock %}">
+
+  <div class="app-shell">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+      <div class="sidebar-brand">
+        <div class="brand-badge">SE26</div>
+
+        <div class="brand-copy">
+          <strong>SE2026</strong>
+          <span>Monitoring</span>
+        </div>
+
+        <button
+          type="button"
+          class="sidebar-close"
+          id="sidebarClose"
+          aria-label="Tutup menu"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="agency-card">
+        <i class="fa-solid fa-chart-column"></i>
+
+        <span>
+          BPS Kabupaten<br>
+          Banyuwangi
+        </span>
+      </div>
+
+      <nav class="sidebar-nav">
+
+        <a
+          href="/dashboard"
+          class="nav-item {% if request.path == '/dashboard' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-house"></i>
+          <span>Dashboard</span>
+        </a>
+
+        <div class="nav-section-title">
+          Monitoring
+        </div>
+
+        <a
+          href="/monitoring-sls"
+          class="nav-item {% if request.path == '/monitoring-sls' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-location-dot"></i>
+          <span>Monitoring SLS</span>
+        </a>
+
+        <a
+          href="/monitoring-pcl"
+          class="nav-item {% if request.path == '/monitoring-pcl' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-user-check"></i>
+          <span>Monitoring PCL</span>
+        </a>
+
+        <a
+          href="/monitoring-pml"
+          class="nav-item {% if request.path == '/monitoring-pml' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-people-group"></i>
+          <span>Monitoring PML</span>
+        </a>
+
+        <a
+          href="/monitoring-kecamatan"
+          class="nav-item {% if request.path == '/monitoring-kecamatan' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-map"></i>
+          <span>Monitoring Kecamatan</span>
+        </a>
+
+        <a
+          href="/peta-spasial"
+          class="nav-item {% if request.path == '/peta-spasial' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-map-location-dot"></i>
+          <span>Peta Spasial (GIS)</span>
+        </a>
+
+        <a
+          href="/tindak-lanjut"
+          class="nav-item {% if request.path == '/tindak-lanjut' %}active{% endif %}"
+        >
+          <i class="fa-brands fa-whatsapp"></i>
+          <span>Tindak Lanjut (WA/Email)</span>
+        </a>
+
+        {% if current_user.role == 'admin' %}
+
+        <div class="nav-section-title">
+          Administrasi
+        </div>
+
+        <a
+          href="/upload"
+          class="nav-item {% if request.path == '/upload' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span>Upload Data SLS</span>
+        </a>
+
+        <a
+          href="/download"
+          class="nav-item {% if request.path == '/download' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-file-arrow-down"></i>
+          <span>Download Data</span>
+        </a>
+
+        <a
+          href="/riwayat-upload"
+          class="nav-item {% if 'riwayat' in request.path %}active{% endif %}"
+        >
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>Riwayat Upload</span>
+        </a>
+
+        <a
+          href="/admin/users"
+          class="nav-item {% if 'users' in request.path %}active{% endif %}"
+        >
+          <i class="fa-solid fa-users-gear"></i>
+          <span>Manajemen User</span>
+        </a>
+
+        <a
+          href="/admin/logs"
+          class="nav-item {% if 'logs' in request.path %}active{% endif %}"
+        >
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>Audit Log Aktivitas</span>
+        </a>
+
         {% endif %}
-      {% endwith %}
-      {% block content %}{% endblock %}
-{% if current_user %}
-    </section>
-    <footer class="app-footer">© 2026 BPS Kabupaten Banyuwangi · SE2026 Monitoring</footer>
-  </main>
-  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
-{% else %}
-  </main>
-{% endif %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/2.1.3/js/dataTables.js"></script>
-<script src="https://cdn.datatables.net/2.1.3/js/dataTables.bootstrap5.js"></script>
-<script src="https://cdn.datatables.net/responsive/3.0.2/js/dataTables.responsive.js"></script>
-<script src="https://cdn.datatables.net/responsive/3.0.2/js/responsive.bootstrap5.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-<script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
-<script src="{{ url_for('static', filename='js/datatable.js') }}"></script>
-{% block scripts %}{% endblock %}
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="/logout" class="logout-link">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          <span>Logout</span>
+        </a>
+      </div>
+    </aside>
+
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- BAGIAN KANAN -->
+    <div class="app-main">
+
+      <header class="topbar">
+
+        <div class="topbar-left">
+          <button
+            type="button"
+            class="sidebar-toggle"
+            id="sidebarToggle"
+            aria-label="Buka menu"
+          >
+            <i class="fa-solid fa-bars"></i>
+          </button>
+
+          <div>
+            <span>Dashboard Monitoring</span>
+            <strong>Sensus Ekonomi 2026</strong>
+          </div>
+        </div>
+
+        <div class="topbar-user">
+          <div class="user-avatar">
+            {{
+              (
+                current_user.username
+                if current_user.username
+                else 'A'
+              )[0]|upper
+            }}
+          </div>
+
+          <div class="user-copy">
+            <strong>
+              {{
+                current_user.username
+                if current_user.username
+                else 'Pengguna'
+              }}
+            </strong>
+
+            <span>
+              {{ current_user.role|upper }}
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-container">
+
+              {% for category, message in messages %}
+                <div
+                  class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
+                  role="alert"
+                >
+                  {{ message }}
+
+                  <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                  ></button>
+                </div>
+              {% endfor %}
+
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+  ></script>
+
+  <!-- Chart.js harus dimuat sebelum static/js/chart.js -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
+  ></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const sidebar = document.getElementById("sidebar");
+      const toggle = document.getElementById("sidebarToggle");
+      const close = document.getElementById("sidebarClose");
+      const backdrop = document.getElementById("sidebarBackdrop");
+
+      function openSidebar() {
+        sidebar?.classList.add("show");
+        backdrop?.classList.add("show");
+        document.body.classList.add("sidebar-open");
+      }
+
+      function closeSidebar() {
+        sidebar?.classList.remove("show");
+        backdrop?.classList.remove("show");
+        document.body.classList.remove("sidebar-open");
+      }
+
+      toggle?.addEventListener("click", openSidebar);
+      close?.addEventListener("click", closeSidebar);
+      backdrop?.addEventListener("click", closeSidebar);
+
+      window.addEventListener("resize", () => {
+        if (window.innerWidth > 991) {
+          closeSidebar();
+        }
+      });
+    });
+  </script>
+
+  {% block scripts %}{% endblock %}
 </body>
 </html>
-

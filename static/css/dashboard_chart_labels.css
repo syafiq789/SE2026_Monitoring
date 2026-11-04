@@ -1,0 +1,12 @@
+/* ==================================================
+   LABEL NILAI PERMANEN SEMUA GRAFIK DASHBOARD
+================================================== */
+
+.chart-card canvas {
+  cursor: pointer;
+}
+
+/*
+ * Label nilai digambar langsung di canvas oleh chart.js.
+ * Tidak membutuhkan library tambahan.
+ */

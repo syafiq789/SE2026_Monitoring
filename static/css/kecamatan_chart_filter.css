@@ -1,0 +1,119 @@
+/* ==================================================
+   FILTER DI DALAM GRAFIK PROGRESS KECAMATAN
+================================================== */
+
+.kecamatan-chart-card {
+  overflow: hidden;
+}
+
+.kecamatan-chart-filter {
+  display: grid;
+  grid-template-columns:
+    minmax(190px, 1fr)
+    minmax(240px, 1fr)
+    auto;
+  gap: 12px;
+  align-items: end;
+
+  margin-bottom: 10px;
+  padding: 12px;
+
+  border: 1px solid var(--cream-200);
+  border-radius: 11px;
+  background: var(--cream-50);
+}
+
+.kecamatan-chart-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.kecamatan-chart-filter-field label {
+  margin: 0;
+
+  color: var(--text-dark);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.kecamatan-chart-filter-field .form-select {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 34px 8px 10px;
+
+  color: var(--text-dark);
+  font-size: 10px;
+
+  border: 1px solid #d9cec3;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: none;
+}
+
+.kecamatan-chart-filter-field .form-select:focus {
+  border-color: var(--orange-600);
+  box-shadow:
+    0 0 0 3px
+    rgba(217, 99, 23, 0.12);
+}
+
+.kecamatan-chart-filter-action {
+  display: flex;
+  align-items: end;
+}
+
+.kecamatan-chart-filter-action .btn {
+  min-height: 38px;
+  padding: 8px 12px;
+
+  color: var(--brown-700);
+  font-size: 10px;
+  white-space: nowrap;
+
+  border: 1px solid var(--border);
+  background: #fff;
+}
+
+.kecamatan-chart-filter-action .btn:hover {
+  border-color: #d7bda9;
+  background: var(--orange-100);
+}
+
+.kecamatan-chart-filter-info {
+  margin-bottom: 10px;
+  padding: 7px 10px;
+
+  color: var(--brown-700);
+  font-size: 9px;
+  font-weight: 700;
+
+  border-radius: 8px;
+  background: var(--orange-100);
+}
+
+@media (max-width: 991px) {
+  .kecamatan-chart-filter {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .kecamatan-chart-filter-action {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 575px) {
+  .kecamatan-chart-filter {
+    grid-template-columns: 1fr;
+  }
+
+  .kecamatan-chart-filter-action {
+    grid-column: auto;
+  }
+
+  .kecamatan-chart-filter-action .btn {
+    width: 100%;
+  }
+}

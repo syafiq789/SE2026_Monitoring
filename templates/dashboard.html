@@ -1,26 +1,540 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard · SE2026 Monitoring{% endblock %}
-{% block page_id %}dashboard{% endblock %}
-{% block content %}
-<div class="page-heading"><div><span class="eyebrow dark">Ikhtisar Kabupaten Banyuwangi</span><h1>Dashboard Monitoring</h1><p>Ringkasan progres berdasarkan data mentah sheet SLS terbaru.</p></div>{% if current_user.role == 'admin' %}<a class="btn btn-primary" href="{{ url_for('upload.upload') }}"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Data SLS</a>{% endif %}</div>
-{% if summary.total_sls == 0 %}
-<div class="empty-state"><div class="empty-icon"><i class="fa-solid fa-chart-pie"></i></div><h2>Belum ada data</h2><p>{% if current_user.role == 'admin' %}Silakan upload file SLS terlebih dahulu.{% else %}Belum ada data yang tersedia. Silakan hubungi Admin untuk upload data SLS.{% endif %}</p>{% if current_user.role == 'admin' %}<a class="btn btn-primary" href="{{ url_for('upload.upload') }}">Upload sekarang</a>{% endif %}</div>
-{% else %}
-<div class="metric-grid">
-  {% set metrics = [('Total Kecamatan',summary.total_kecamatan,'fa-map-location-dot','brown'),('Total PML',summary.total_pml,'fa-people-roof','orange'),('Total PCL',summary.total_pcl,'fa-user-group','gold'),('Total SLS',summary.total_sls,'fa-location-crosshairs','cream'),('Total Target',summary.total_target,'fa-bullseye','brown'),('Sudah Upload',summary.total_processed,'fa-circle-check','green'),('Belum Upload',summary.total_remaining,'fa-clock','red'),('Progress Keseluruhan',('%.2f%%'|format(summary.progress)),'fa-chart-line','orange')] %}
-  {% for label,value,icon,tone in metrics %}<article class="metric-card {{ tone }}"><div class="metric-icon"><i class="fa-solid {{ icon }}"></i></div><div><span>{{ label }}</span><strong>{{ value if '%' in value|string else '{:,}'.format(value) }}</strong></div></article>{% endfor %}
-</div>
-<div class="status-strip"><article><span class="dot red"></span><div><small>SLS Belum Mulai</small><strong>{{ '{:,}'.format(summary.sls_belum_mulai) }}</strong></div></article><article><span class="dot orange"></span><div><small>SLS Sedang Proses</small><strong>{{ '{:,}'.format(summary.sls_sedang_proses) }}</strong></div></article><article><span class="dot green"></span><div><small>SLS Selesai</small><strong>{{ '{:,}'.format(summary.sls_selesai) }}</strong></div></article><article><span class="dot gray"></span><div><small>SLS Data Kosong</small><strong>{{ '{:,}'.format(summary.sls_data_kosong) }}</strong></div></article></div>
-<div class="chart-grid">
-  <article class="panel chart-card"><div class="panel-title"><div><span>Komposisi</span><h2>Upload keseluruhan</h2></div></div><div class="chart-wrap small"><canvas id="uploadChart"></canvas></div></article>
-  <article class="panel chart-card wide"><div class="panel-title"><div><span>Wilayah</span><h2>Progress per Kecamatan</h2></div></div><div class="chart-wrap"><canvas id="kecamatanChart"></canvas></div></article>
-  <article class="panel chart-card"><div class="panel-title"><div><span>Workflow</span><h2>Status pekerjaan</h2></div></div><div class="chart-wrap"><canvas id="workflowChart"></canvas></div></article>
-  <article class="panel chart-card"><div class="panel-title"><div><span>Pengawas</span><h2>Progress per PML</h2></div></div><div class="chart-wrap"><canvas id="pmlChart"></canvas></div></article>
-  <article class="panel chart-card"><div class="panel-title"><div><span>Pencacah</span><h2>Progress per PCL</h2></div></div><div class="chart-wrap"><canvas id="pclChart"></canvas></div></article>
-  <article class="panel chart-card"><div class="panel-title"><div><span>Perhatian</span><h2>Kecamatan terendah</h2></div></div><div class="chart-wrap"><canvas id="lowKecChart"></canvas></div></article>
-  <article class="panel chart-card"><div class="panel-title"><div><span>Perhatian</span><h2>PML terendah</h2></div></div><div class="chart-wrap"><canvas id="lowPmlChart"></canvas></div></article>
-</div>
-{% endif %}
-{% endblock %}
-{% block scripts %}{% if summary.total_sls %}<script>window.SE2026_SUMMARY={{ summary|tojson }};</script><script src="{{ url_for('static', filename='js/chart.js') }}"></script><script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>{% endif %}{% endblock %}
 
+{% block title %}
+Dashboard · SE2026 Monitoring
+{% endblock %}
+
+{% block page_id %}
+dashboard
+{% endblock %}
+
+{% block content %}
+
+<!-- ==================================================
+     JUDUL DASHBOARD
+================================================== -->
+<div class="page-heading">
+  <div>
+    <span class="eyebrow dark">
+      Ikhtisar Kabupaten Banyuwangi
+    </span>
+
+    <h1>Dashboard Monitoring</h1>
+
+    <p>
+      Ringkasan progres berdasarkan data mentah
+      sheet SLS terbaru.
+    </p>
+  </div>
+
+  {% if current_user.role == 'admin' %}
+  <a
+    class="btn btn-primary"
+    href="{{ url_for('upload.upload') }}"
+  >
+    <i class="fa-solid fa-cloud-arrow-up"></i>
+    Upload Data SLS
+  </a>
+  {% endif %}
+</div>
+
+
+{% if summary.total_sls == 0 %}
+
+<!-- ==================================================
+     DATA KOSONG
+================================================== -->
+<div class="empty-state">
+  <div class="empty-icon">
+    <i class="fa-solid fa-chart-pie"></i>
+  </div>
+
+  <h2>Belum ada data</h2>
+
+  <p>
+    {% if current_user.role == 'admin' %}
+      Silakan upload file SLS terlebih dahulu.
+    {% else %}
+      Belum ada data yang tersedia.
+      Silakan hubungi Admin untuk upload data SLS.
+    {% endif %}
+  </p>
+
+  {% if current_user.role == 'admin' %}
+  <a
+    class="btn btn-primary"
+    href="{{ url_for('upload.upload') }}"
+  >
+    Upload sekarang
+  </a>
+  {% endif %}
+</div>
+
+
+{% else %}
+
+<!-- ==================================================
+     KARTU RINGKASAN
+================================================== -->
+<div class="metric-grid">
+
+  {% set metrics = [
+    (
+      'Total Kecamatan',
+      summary.total_kecamatan,
+      'fa-map-location-dot',
+      'brown'
+    ),
+    (
+      'Total PML',
+      summary.total_pml,
+      'fa-people-roof',
+      'orange'
+    ),
+    (
+      'Total PCL',
+      summary.total_pcl,
+      'fa-user-group',
+      'gold'
+    ),
+    (
+      'Total SLS',
+      summary.total_sls,
+      'fa-location-crosshairs',
+      'cream'
+    ),
+    (
+      'Total Target',
+      summary.total_target,
+      'fa-bullseye',
+      'brown'
+    ),
+    (
+      'Sudah Upload',
+      summary.total_processed,
+      'fa-circle-check',
+      'green'
+    ),
+    (
+      'Belum Upload',
+      summary.total_remaining,
+      'fa-clock',
+      'red'
+    ),
+    (
+      'Progress Keseluruhan',
+      ('%.2f%%'|format(summary.progress)),
+      'fa-chart-line',
+      'orange'
+    )
+  ] %}
+
+  {% for label, value, icon, tone in metrics %}
+  <article class="metric-card {{ tone }}">
+
+    <div class="metric-icon">
+      <i class="fa-solid {{ icon }}"></i>
+    </div>
+
+    <div class="metric-copy">
+      <span>{{ label }}</span>
+
+      <strong>
+        {{
+          value
+          if '%' in value|string
+          else '{:,}'.format(value)
+        }}
+      </strong>
+    </div>
+
+  </article>
+  {% endfor %}
+
+</div>
+
+
+<!-- ==================================================
+     STATUS SLS DAN FILTER DATA
+================================================== -->
+<div class="status-strip status-strip-with-filter">
+
+  <!-- BELUM MULAI -->
+  <article>
+    <span class="dot red"></span>
+
+    <div>
+      <small>SLS Belum Mulai</small>
+
+      <strong>
+        {{ '{:,}'.format(summary.sls_belum_mulai) }}
+      </strong>
+    </div>
+  </article>
+
+
+  <!-- SEDANG PROSES -->
+  <article>
+    <span class="dot orange"></span>
+
+    <div>
+      <small>SLS Sedang Proses</small>
+
+      <strong>
+        {{ '{:,}'.format(summary.sls_sedang_proses) }}
+      </strong>
+    </div>
+  </article>
+
+
+  <!-- SELESAI -->
+  <article>
+    <span class="dot green"></span>
+
+    <div>
+      <small>SLS Selesai</small>
+
+      <strong>
+        {{ '{:,}'.format(summary.sls_selesai) }}
+      </strong>
+    </div>
+  </article>
+
+
+  <!-- DATA KOSONG -->
+  <article>
+    <span class="dot gray"></span>
+
+    <div>
+      <small>SLS Data Kosong</small>
+
+      <strong>
+        {{ '{:,}'.format(summary.sls_data_kosong) }}
+      </strong>
+    </div>
+  </article>
+
+
+  <!-- ==================================================
+       FILTER KECAMATAN, PML, DAN PCL
+  ================================================== -->
+  <article class="status-filter-item">
+
+    <button
+      type="button"
+      id="dashboardFilterToggle"
+      class="status-filter-toggle"
+      aria-expanded="false"
+      aria-controls="dashboardFilterPanel"
+    >
+      <span class="status-filter-icon">
+        <i class="fa-solid fa-filter"></i>
+      </span>
+
+      <span class="status-filter-copy">
+        <small>Filter Data</small>
+        <strong>Kecamatan · PML · PCL</strong>
+      </span>
+
+      <i
+        class="fa-solid fa-chevron-down status-filter-chevron"
+      ></i>
+    </button>
+
+
+    <!-- PANEL FILTER -->
+    <div
+      id="dashboardFilterPanel"
+      class="status-filter-popover"
+      hidden
+    >
+
+      <div class="status-filter-popover-header">
+        <div>
+          <span>Penyaring Data</span>
+          <h2>Filter Monitoring</h2>
+        </div>
+
+        <button
+          type="button"
+          id="dashboardFilterClose"
+          class="status-filter-close"
+          aria-label="Tutup filter"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+
+      <div class="status-filter-grid">
+
+        <!-- FILTER KECAMATAN -->
+        <div class="status-filter-field">
+          <label for="dashboardKecamatanFilter">
+            Kecamatan
+          </label>
+
+          <select
+            id="dashboardKecamatanFilter"
+            class="form-select"
+          >
+            <option value="">
+              Semua Kecamatan
+            </option>
+          </select>
+        </div>
+
+
+        <!-- FILTER PML -->
+        <div class="status-filter-field">
+          <label for="dashboardPmlFilter">
+            PML
+          </label>
+
+          <select
+            id="dashboardPmlFilter"
+            class="form-select"
+          >
+            <option value="">
+              Semua PML
+            </option>
+          </select>
+        </div>
+
+
+        <!-- FILTER PCL -->
+        <div class="status-filter-field">
+          <label for="dashboardPclFilter">
+            PCL
+          </label>
+
+          <select
+            id="dashboardPclFilter"
+            class="form-select"
+          >
+            <option value="">
+              Semua PCL
+            </option>
+          </select>
+        </div>
+
+      </div>
+
+
+      <!-- INFORMASI FILTER AKTIF -->
+      <div
+        id="dashboardFilterInfo"
+        class="status-filter-info"
+      >
+        Menampilkan seluruh Kecamatan, PML, dan PCL
+      </div>
+
+
+      <!-- TOMBOL FILTER -->
+      <div class="status-filter-actions">
+
+        <button
+          type="button"
+          id="resetDashboardFilter"
+          class="btn btn-light"
+        >
+          <i class="fa-solid fa-rotate-left"></i>
+          Reset Filter
+        </button>
+
+        <button
+          type="button"
+          id="applyDashboardFilter"
+          class="btn btn-primary"
+        >
+          <i class="fa-solid fa-filter"></i>
+          Terapkan Filter
+        </button>
+
+      </div>
+
+    </div>
+
+  </article>
+
+</div>
+
+
+<!-- ==================================================
+     DAFTAR GRAFIK
+================================================== -->
+<div class="chart-grid">
+
+  <!-- UPLOAD KESELURUHAN -->
+  <article class="panel chart-card">
+    <div class="panel-title">
+      <div>
+        <span>Komposisi</span>
+
+        <h2>Upload keseluruhan</h2>
+
+        <p class="panel-description">
+          Ringkasan komposisi data yang sudah dan
+          belum upload.
+        </p>
+      </div>
+    </div>
+
+    <div class="chart-wrap chart-small">
+      <canvas id="uploadChart"></canvas>
+    </div>
+  </article>
+
+
+  <!-- PROGRESS PER KECAMATAN -->
+  <article class="panel chart-card">
+    <div class="panel-title">
+      <div>
+        <span>Wilayah</span>
+
+        <h2>Progress per Kecamatan</h2>
+
+        <p class="panel-description">
+          Perbandingan progress seluruh kecamatan.
+        </p>
+      </div>
+    </div>
+
+    <div class="chart-scroll-x">
+      <div class="chart-wrap chart-canvas-box">
+        <canvas id="kecamatanChart"></canvas>
+      </div>
+    </div>
+  </article>
+
+
+  <!-- STATUS PEKERJAAN -->
+  <article class="panel chart-card">
+    <div class="panel-title">
+      <div>
+        <span>Workflow</span>
+
+        <h2>Status pekerjaan</h2>
+
+        <p class="panel-description">
+          Ringkasan status pekerjaan berdasarkan data SLS.
+        </p>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <canvas id="workflowChart"></canvas>
+    </div>
+  </article>
+
+
+  <!-- PROGRESS PML -->
+  <article class="panel chart-card">
+    <div class="panel-title">
+      <div>
+        <span>Pengawas</span>
+
+        <h2>Progress per PML</h2>
+
+        <p class="panel-description">
+          Perbandingan progress seluruh PML.
+        </p>
+      </div>
+    </div>
+
+    <div class="chart-scroll-y">
+      <div class="chart-wrap chart-canvas-box">
+        <canvas id="pmlChart"></canvas>
+      </div>
+    </div>
+  </article>
+
+
+<!-- PROGRESS PCL -->
+  <article class="panel chart-card">
+    <div class="panel-title">
+      <div>
+        <span>Pencacah</span>
+
+        <h2>Progress per PCL</h2>
+
+        <p class="panel-description">
+          Perbandingan progress seluruh PCL.
+        </p>
+      </div>
+    </div>
+
+    <div id="pclChart" class="progress-list"></div>
+  </article>
+
+
+  <!-- PROGRESS SELURUH KECAMATAN -->
+  <article class="panel chart-card">
+    <div class="panel-title">
+      <div>
+        <span>Perhatian</span>
+
+        <h2>Progress Seluruh Kecamatan</h2>
+
+        <p class="panel-description">
+          Urutan progress kecamatan dari terendah
+          hingga terbesar.
+        </p>
+      </div>
+    </div>
+
+    <div class="chart-scroll-y">
+      <div class="chart-wrap chart-canvas-box">
+        <canvas id="lowKecChart"></canvas>
+      </div>
+    </div>
+  </article>
+
+
+  <!-- PML TERENDAH -->
+  <article class="panel chart-card">
+    <div class="panel-title">
+      <div>
+        <span>Perhatian</span>
+
+        <h2>PML terendah</h2>
+
+        <p class="panel-description">
+          Daftar 10 PML dengan progress terendah.
+        </p>
+      </div>
+    </div>
+
+    <div class="chart-scroll-y low-pml-scroll">
+      <div class="chart-wrap chart-canvas-box">
+        <canvas id="lowPmlChart"></canvas>
+      </div>
+    </div>
+  </article>
+
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+
+{% block scripts %}
+
+{% if summary.total_sls %}
+
+<script>
+  window.SE2026_SUMMARY = {{ summary | tojson }};
+</script>
+
+<script
+  src="{{ url_for('static', filename='js/chart.js') }}?v=180"
+></script>
+
+<script
+  src="{{ url_for('static', filename='js/dashboard.js') }}?v=180"
+></script>
+
+{% endif %}
+
+{% endblock %}

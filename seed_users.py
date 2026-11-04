@@ -24,6 +24,7 @@ DEFAULT_USERS = [
 def seed():
     app = create_app()
     with app.app_context():
+        db.create_all()
         try:
             for item in DEFAULT_USERS:
                 existing = User.query.filter(

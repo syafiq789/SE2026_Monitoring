@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+
+{% block title %}Peta Spasial (WebGIS) - SE2026 Monitoring BPS Banyuwangi{% endblock %}
+{% block page_id %}gis-page{% endblock %}
+
+{% block head %}
+<!-- Leaflet CSS -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""
+/>
+<style>
+  .gis-header-badge {
+    background: linear-gradient(135deg, var(--brown-900), var(--orange-600));
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .gis-map-container {
+    height: 600px;
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+    z-index: 10;
+  }
+  .gis-legend {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    line-height: 1.5;
+    font-size: 0.82rem;
+  }
+  .gis-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .gis-legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .leaderboard-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .leaderboard-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+    border-radius: 6px;
+  }
+  .leaderboard-item:hover {
+    background: var(--cream-50);
+  }
+  .custom-popup .leaflet-popup-content-wrapper {
+    border-radius: 10px;
+    padding: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+
+  <!-- Header Banner -->
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+      <div class="gis-header-badge mb-2">
+        <i class="fa-solid fa-satellite-dish"></i> Modul WebGIS Spasial Tugas Akhir
+      </div>
+      <h2 class="h4 fw-bold text-dark mb-1">
+        Pemetaan Spasial Sebaran Progres Sensus Ekonomi 2026
+      </h2>
+      <p class="text-muted small mb-0">
+        Visualisasi geospasial 25 wilayah kecamatan di Kabupaten Banyuwangi berbasis data agregasi lapangan.
+      </p>
+    </div>
+
+    <!-- Kontrol Cepat -->
+    <div class="d-flex align-items-center gap-2">
+      <div class="input-group input-group-sm" style="width: 260px;">
+        <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <input
+          type="text"
+          id="searchKecamatan"
+          class="form-control"
+          placeholder="Cari kecamatan..."
+        />
+      </div>
+      <select id="filterStatus" class="form-select form-select-sm" style="width: 180px;">
+        <option value="all">Semua Status Wilayah</option>
+        <option value="optimal">🟢 Optimal (≥80%)</option>
+        <option value="moderate">🟡 Moderat (50-79%)</option>
+        <option value="critical">🔴 Perlu Percepatan (&lt;50%)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Metric Overview Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100 p-3" style="border-left: 4px solid var(--orange-500) !important;">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <span class="text-muted small fw-semibold text-uppercase">Rata-rata Banyuwangi</span>
+            <h3 class="fw-bold mb-0 text-dark">{{ summary.overall_progress }}%</h3>
+          </div>
+          <div class="p-3 bg-light rounded-circle text-primary">
+            <i class="fa-solid fa-chart-pie fa-xl"></i>
+          </div>
+        </div>
+        <div class="mt-2 text-muted small">
+          Total: <strong>{{ "{:,}".format(summary.total_processed) }}</strong> dari {{ "{:,}".format(summary.total_target) }}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100 p-3" style="border-left: 4px solid #25835b !important;">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <span class="text-muted small fw-semibold text-uppercase">Wilayah Optimal</span>
+            <h3 class="fw-bold mb-0 text-success">{{ summary.high_progress_count }}</h3>
+          </div>
+          <div class="p-3 bg-light rounded-circle text-success">
+            <i class="fa-solid fa-circle-check fa-xl"></i>
+          </div>
+        </div>
+        <div class="mt-2 text-muted small">
+          Progres penyelesaian $\ge 80\%$
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100 p-3" style="border-left: 4px solid #dba63a !important;">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <span class="text-muted small fw-semibold text-uppercase">Wilayah Moderat</span>
+            <h3 class="fw-bold mb-0" style="color: #dba63a;">{{ summary.medium_progress_count }}</h3>
+          </div>
+          <div class="p-3 bg-light rounded-circle" style="color: #dba63a;">
+            <i class="fa-solid fa-clock-rotate-left fa-xl"></i>
+          </div>
+        </div>
+        <div class="mt-2 text-muted small">
+          Progres penyelesaian 50% - 79%
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100 p-3" style="border-left: 4px solid #bf3f32 !important;">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <span class="text-muted small fw-semibold text-uppercase">Perlu Percepatan</span>
+            <h3 class="fw-bold mb-0 text-danger">{{ summary.low_progress_count }}</h3>
+          </div>
+          <div class="p-3 bg-light rounded-circle text-danger">
+            <i class="fa-solid fa-triangle-exclamation fa-xl"></i>
+          </div>
+        </div>
+        <div class="mt-2 text-muted small">
+          Progres penyelesaian &lt; 50%
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Peta & Leaderboard Wilayah -->
+  <div class="row g-4">
+    <!-- Kolom Peta -->
+    <div class="col-lg-8 col-xl-9">
+      <div class="card border-0 shadow-sm p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="fw-bold text-dark">
+            <i class="fa-solid fa-map-location me-2 text-primary"></i> Peta Interaktif Kabupaten Banyuwangi
+          </span>
+          <span class="badge bg-light text-dark border">
+            25 Titik Koordinat Kecamatan Terpetakan
+          </span>
+        </div>
+        <div id="banyuwangiMap" class="gis-map-container"></div>
+      </div>
+    </div>
+
+    <!-- Kolom Leaderboard / Peringkat Progres Spasial -->
+    <div class="col-lg-4 col-xl-3">
+      <div class="card border-0 shadow-sm p-3 mb-3">
+        <h6 class="fw-bold text-success mb-3 d-flex align-items-center gap-2">
+          <i class="fa-solid fa-trophy text-warning"></i> 5 Progres Tertinggi
+        </h6>
+        <ul class="leaderboard-list">
+          {% for kec in leaderboard_top %}
+          <li class="leaderboard-item">
+            <div>
+              <div class="fw-semibold text-dark small">{{ kec.kec_name }}</div>
+              <div class="text-muted" style="font-size: 0.75rem;">
+                Target: {{ "{:,}".format(kec.total_target) }}
+              </div>
+            </div>
+            <span class="badge bg-success">{{ kec.progress }}%</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="card border-0 shadow-sm p-3">
+        <h6 class="fw-bold text-danger mb-3 d-flex align-items-center gap-2">
+          <i class="fa-solid fa-circle-exclamation"></i> 5 Perlu Akselerasi
+        </h6>
+        <ul class="leaderboard-list">
+          {% for kec in leaderboard_bottom %}
+          <li class="leaderboard-item">
+            <div>
+              <div class="fw-semibold text-dark small">{{ kec.kec_name }}</div>
+              <div class="text-muted" style="font-size: 0.75rem;">
+                Sisa: {{ "{:,}".format(kec.remaining_count) }} target
+              </div>
+            </div>
+            <span class="badge bg-danger">{{ kec.progress }}%</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Leaflet JS -->
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""
+></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const features = {{ features|tojson }};
+  const summary = {{ summary|tojson }};
+
+  // Inisialisasi Peta Leaflet
+  const map = L.map("banyuwangiMap").setView(summary.center, summary.zoom);
+
+  // Tile layer dari OpenStreetMap
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> BPS Kab. Banyuwangi',
+  }).addTo(map);
+
+  const markers = [];
+
+  function createPopupContent(f) {
+    return `
+      <div style="min-width: 220px; font-family: Inter, sans-serif;">
+        <div style="border-bottom: 2px solid ${f.color}; padding-bottom: 6px; margin-bottom: 8px;">
+          <h6 style="margin: 0; font-weight: 700; color: #261913;">Kec. ${f.kec_name}</h6>
+          <small style="color: #756960;">Kode Wilayah: <strong>${f.kec_code}</strong></small>
+        </div>
+        <div style="margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 3px;">
+            <span>Progres Sensus:</span>
+            <strong style="color: ${f.color};">${f.progress}%</strong>
+          </div>
+          <div style="background: #e6d9cd; height: 8px; border-radius: 4px; overflow: hidden;">
+            <div style="background: ${f.color}; width: ${f.progress}%; height: 100%;"></div>
+          </div>
+        </div>
+        <table style="width: 100%; font-size: 0.78rem; line-height: 1.6; color: #444;">
+          <tr><td>Total SLS:</td><td style="text-align: right; font-weight: 600;">${f.jumlah_sls.toLocaleString()}</td></tr>
+          <tr><td>Target Usaha:</td><td style="text-align: right; font-weight: 600;">${f.total_target.toLocaleString()}</td></tr>
+          <tr><td>Selesai:</td><td style="text-align: right; font-weight: 600; color: #25835b;">${f.processed_count.toLocaleString()}</td></tr>
+          <tr><td>Sisa Beban:</td><td style="text-align: right; font-weight: 600; color: #bf3f32;">${f.remaining_count.toLocaleString()}</td></tr>
+          <tr><td>Open/Draft:</td><td style="text-align: right;">${(f.open_count + f.draft_count).toLocaleString()}</td></tr>
+        </table>
+        <div style="margin-top: 10px; text-align: center;">
+          <a href="/monitoring-sls?kec_code=${f.kec_code}" class="btn btn-sm btn-primary w-100" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 4px;">
+            <i class="fa-solid fa-list-check me-1"></i> Rincian SLS Kecamatan
+          </a>
+        </div>
+      </div>
+    `;
+  }
+
+  // Tambahkan CircleMarker untuk setiap kecamatan
+  features.forEach(f => {
+    // Radius dinamis proporsional terhadap target, min 10 max 22
+    const radius = Math.min(Math.max(Math.sqrt(f.total_target || 500) * 0.4, 11), 24);
+
+    const circle = L.circleMarker([f.lat, f.lng], {
+      radius: radius,
+      fillColor: f.color,
+      color: "#ffffff",
+      weight: 2.5,
+      opacity: 1,
+      fillOpacity: 0.85,
+    }).addTo(map);
+
+    circle.bindPopup(createPopupContent(f), { className: "custom-popup" });
+    circle.bindTooltip(`<b>${f.kec_name}</b>: ${f.progress}%`, { direction: "top" });
+
+    markers.push({
+      feature: f,
+      marker: circle,
+    });
+  });
+
+  // Tambahkan Legend di pojok kanan bawah
+  const legend = L.control({ position: "bottomright" });
+  legend.onAdd = function () {
+    const div = L.DomUtil.create("div", "gis-legend");
+    div.innerHTML = `
+      <div style="font-weight: 700; margin-bottom: 6px;">Status Progres Lapangan</div>
+      <div class="gis-legend-item">
+        <span class="gis-legend-color" style="background: #25835b;"></span>
+        <span>Optimal (≥ 80%)</span>
+      </div>
+      <div class="gis-legend-item">
+        <span class="gis-legend-color" style="background: #dba63a;"></span>
+        <span>Moderat (50% - 79%)</span>
+      </div>
+      <div class="gis-legend-item">
+        <span class="gis-legend-color" style="background: #bf3f32;"></span>
+        <span>Perlu Akselerasi (&lt; 50%)</span>
+      </div>
+    `;
+    return div;
+  };
+  legend.addTo(map);
+
+  // Fitur Filter Dropdown Status
+  document.getElementById("filterStatus").addEventListener("change", function (e) {
+    const val = e.target.value;
+    markers.forEach(({ feature, marker }) => {
+      let visible = true;
+      if (val === "optimal" && feature.progress < 80.0) visible = false;
+      if (val === "moderate" && (feature.progress < 50.0 || feature.progress >= 80.0)) visible = false;
+      if (val === "critical" && feature.progress >= 50.0) visible = false;
+
+      if (visible) {
+        if (!map.hasLayer(marker)) map.addLayer(marker);
+      } else {
+        if (map.hasLayer(marker)) map.removeLayer(marker);
+      }
+    });
+  });
+
+  // Fitur Pencarian Kecamatan Instan
+  document.getElementById("searchKecamatan").addEventListener("input", function (e) {
+    const query = e.target.value.toLowerCase().trim();
+    if (!query) return;
+
+    const matched = markers.find(m => m.feature.kec_name.toLowerCase().includes(query));
+    if (matched) {
+      map.flyTo([matched.feature.lat, matched.feature.lng], 12, { animate: true, duration: 1.2 });
+      matched.marker.openPopup();
+    }
+  });
+});
+</script>
+{% endblock %}

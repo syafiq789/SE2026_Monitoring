@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Trail & Log Aktivitas - SE2026 Monitoring BPS Banyuwangi{% endblock %}
+{% block page_id %}logs-page{% endblock %}
+
+{% block head %}
+<style>
+  .log-header-badge {
+    background: linear-gradient(135deg, #1f2937, #4b5563);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+
+  <!-- Header Banner -->
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+      <div class="log-header-badge mb-2">
+        <i class="fa-solid fa-shield-halved"></i> Tata Kelola Keamanan & Audit Trail
+      </div>
+      <h2 class="h4 fw-bold text-dark mb-1">
+        Audit Trail & Rekam Jejak Aktivitas Sistem
+      </h2>
+      <p class="text-muted small mb-0">
+        Pencatatan rekam jejak operasional pengguna (login, upload sensus, ekspor data rahasia) untuk transparansi tata kelola data.
+      </p>
+    </div>
+
+    <!-- Filter Form -->
+    <form method="GET" action="/admin/logs" class="d-flex align-items-center gap-2">
+      <div class="input-group input-group-sm" style="width: 240px;">
+        <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <input
+          type="text"
+          name="q"
+          class="form-control"
+          placeholder="Cari user / detail..."
+          value="{{ search_query }}"
+        />
+      </div>
+
+      <select name="action" class="form-select form-select-sm" style="width: 170px;" onchange="this.form.submit()">
+        <option value="">Semua Aksi</option>
+        <option value="LOGIN" {% if current_action == 'LOGIN' %}selected{% endif %}>Login Berhasil</option>
+        <option value="LOGIN_FAILED" {% if current_action == 'LOGIN_FAILED' %}selected{% endif %}>Login Gagal</option>
+        <option value="LOGOUT" {% if current_action == 'LOGOUT' %}selected{% endif %}>Logout</option>
+        <option value="UPLOAD" {% if current_action == 'UPLOAD' %}selected{% endif %}>Upload Data SLS</option>
+        <option value="EXPORT" {% if current_action == 'EXPORT' %}selected{% endif %}>Export Data</option>
+        <option value="REGISTER" {% if current_action == 'REGISTER' %}selected{% endif %}>Pendaftaran Akun</option>
+        <option value="SUBMIT_SUS" {% if current_action == 'SUBMIT_SUS' %}selected{% endif %}>Kuesioner SUS</option>
+      </select>
+
+      {% if current_action or search_query %}
+      <a href="/admin/logs" class="btn btn-sm btn-outline-secondary">Reset</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Tabel Log -->
+  <div class="card border-0 shadow-sm p-3">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h6 class="fw-bold text-dark mb-0">
+        <i class="fa-solid fa-list-check text-primary me-2"></i> Rekam Aktivitas Terkini (Maksimal 250 Log Terakhir)
+      </h6>
+      <span class="badge bg-light text-muted border">Total {{ logs|length }} rekaman log</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover table-striped align-middle" style="font-size: 0.85rem;">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 60px;">No.</th>
+            <th style="width: 170px;">Waktu & Tanggal</th>
+            <th style="width: 140px;">Pengguna</th>
+            <th style="width: 130px;">Aksi</th>
+            <th>Target Objek</th>
+            <th>Rincian Aktivitas</th>
+            <th style="width: 130px;">Alamat IP</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td class="text-muted small">
+              {{ log.created_at.strftime("%d/%m/%Y %H:%M:%S") if log.created_at else "-" }}
+            </td>
+            <td>
+              {% if log.user %}
+                <span class="badge bg-light text-dark border">
+                  <i class="fa-solid fa-user me-1"></i> {{ log.user.username }}
+                </span>
+              {% else %}
+                <span class="badge bg-secondary">System / Tamu</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if log.action == 'LOGIN' %}
+                <span class="badge bg-success">LOGIN</span>
+              {% elif log.action == 'LOGIN_FAILED' %}
+                <span class="badge bg-danger">LOGIN GAGAL</span>
+              {% elif log.action == 'LOGOUT' %}
+                <span class="badge bg-secondary">LOGOUT</span>
+              {% elif log.action == 'UPLOAD' %}
+                <span class="badge bg-primary">UPLOAD SLS</span>
+              {% elif log.action == 'EXPORT' %}
+                <span class="badge bg-info text-dark">EXPORT</span>
+              {% elif log.action == 'SUBMIT_SUS' %}
+                <span class="badge bg-warning text-dark">UJI SUS</span>
+              {% else %}
+                <span class="badge bg-dark">{{ log.action }}</span>
+              {% endif %}
+            </td>
+            <td class="fw-semibold text-dark">{{ log.target or '-' }}</td>
+            <td class="text-muted small">{{ log.details or '-' }}</td>
+            <td><code>{{ log.ip_address or '127.0.0.1' }}</code></td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="text-center py-4 text-muted">
+              <i class="fa-solid fa-inbox fa-2x mb-2 d-block"></i>
+              Belum ada riwayat aktivitas yang tercatat.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

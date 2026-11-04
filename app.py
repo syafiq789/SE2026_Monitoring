@@ -1,5 +1,5 @@
 import logging
-import streamlit as st
+import os
 
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -23,6 +23,9 @@ def create_app(config_class=Config):
     from routes.auth_routes import auth_bp
     from routes.dashboard_routes import dashboard_bp
     from routes.export_routes import export_bp
+    from routes.followup_routes import followup_bp
+    from routes.gis_routes import gis_bp
+    from routes.log_routes import log_bp
     from routes.monitoring_routes import monitoring_bp
     from routes.upload_routes import upload_bp
     from routes.user_routes import user_bp
@@ -31,17 +34,41 @@ def create_app(config_class=Config):
         auth_bp,
         dashboard_bp,
         monitoring_bp,
+        gis_bp,
+        followup_bp,
         upload_bp,
         export_bp,
         user_bp,
+        log_bp,
         api_bp,
     ):
         app.register_blueprint(blueprint)
 
+    _tables_initialized = False
+
+    @app.before_request
+    def ensure_extra_tables():
+        nonlocal _tables_initialized
+        if not _tables_initialized:
+            try:
+                import models.activity_log
+                db.create_all()
+                _tables_initialized = True
+            except Exception:
+                pass
+
     @app.route("/")
     def index():
         if session.get("user_id"):
-            return redirect(url_for("dashboard.dashboard"))
+            from models.user import User
+
+            try:
+                user = db.session.get(User, session["user_id"])
+                if user and user.is_active:
+                    return redirect(url_for("dashboard.dashboard"))
+            except Exception:
+                db.session.rollback()
+            session.clear()
         return redirect(url_for("auth.login"))
 
     @app.context_processor
@@ -84,12 +111,16 @@ def create_app(config_class=Config):
         app.logger.exception("Kesalahan aplikasi: %s", error)
         return render_template("500.html", friendly_message=None), 500
 
-    log_file = Path(app.root_path) / "se2026.log"
-    handler = RotatingFileHandler(log_file, maxBytes=1_000_000, backupCount=3, encoding="utf-8")
-    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message)s"))
-    handler.setLevel(logging.INFO)
-    if not any(isinstance(item, RotatingFileHandler) for item in app.logger.handlers):
-        app.logger.addHandler(handler)
+    try:
+        log_dir = Path("/tmp") if os.getenv("VERCEL") else Path(app.root_path)
+        log_file = log_dir / "se2026.log"
+        handler = RotatingFileHandler(log_file, maxBytes=1_000_000, backupCount=3, encoding="utf-8")
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message)s"))
+        handler.setLevel(logging.INFO)
+        if not any(isinstance(item, RotatingFileHandler) for item in app.logger.handlers):
+            app.logger.addHandler(handler)
+    except OSError:
+        pass
 
     return app
 
@@ -99,4 +130,3 @@ app = create_app()
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=app.config.get("DEBUG", False))
-

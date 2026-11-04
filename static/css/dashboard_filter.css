@@ -1,0 +1,171 @@
+/* ==================================================
+   FILTER MONITORING DASHBOARD
+   Tampilan seperti halaman filter monitoring.
+================================================== */
+
+.dashboard-monitoring-filter {
+  margin-bottom: 18px;
+  padding: 18px 20px;
+}
+
+.dashboard-monitoring-filter-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+
+  margin-bottom: 18px;
+}
+
+.dashboard-monitoring-filter-heading span {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: var(--orange-600);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.dashboard-monitoring-filter-heading h2 {
+  margin: 0;
+
+  color: var(--text-dark);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.dashboard-filter-icon {
+  display: grid;
+  place-items: center;
+
+  width: 30px;
+  height: 30px;
+
+  color: var(--brown-700);
+
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--cream-50);
+}
+
+.dashboard-monitoring-filter-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+  gap: 14px;
+
+  margin-bottom: 14px;
+}
+
+.dashboard-monitoring-filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.dashboard-monitoring-filter-item label {
+  margin: 0;
+
+  color: var(--text-dark);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.dashboard-monitoring-filter-item .form-select {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 36px 9px 12px;
+
+  color: var(--text-dark);
+  font-size: 11px;
+
+  border: 1px solid #d9cec3;
+  border-radius: 9px;
+  background-color: #fff;
+  box-shadow: none;
+}
+
+.dashboard-monitoring-filter-item .form-select:focus {
+  border-color: var(--orange-600);
+  box-shadow:
+    0 0 0 3px
+    rgba(217, 99, 23, 0.12);
+}
+
+.dashboard-monitoring-filter-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding-top: 12px;
+
+  border-top: 1px solid var(--cream-200);
+}
+
+.dashboard-monitoring-filter-info {
+  color: var(--text-medium);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.dashboard-monitoring-filter-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dashboard-monitoring-filter-actions .btn {
+  min-height: 38px;
+  padding: 8px 13px;
+
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.dashboard-monitoring-filter-actions .btn-light {
+  color: var(--text-dark);
+  border: 1px solid var(--border);
+  background: var(--cream-50);
+}
+
+.dashboard-monitoring-filter-actions .btn-primary {
+  border-color: var(--orange-600);
+  background: var(--orange-600);
+}
+
+@media (max-width: 991px) {
+  .dashboard-monitoring-filter-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-monitoring-filter {
+    padding: 16px;
+  }
+
+  .dashboard-monitoring-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-monitoring-filter-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-monitoring-filter-actions {
+    width: 100%;
+  }
+
+  .dashboard-monitoring-filter-actions .btn {
+    flex: 1 1 0;
+  }
+}

@@ -1,13 +1,316 @@
 {% extends 'base.html' %}
-{% block title %}Upload Data SLS · SE2026{% endblock %}{% block page_id %}upload{% endblock %}
-{% block content %}
-<div class="page-heading"><div><span class="eyebrow dark">Administrasi data</span><h1>Upload Data SLS</h1><p>Satu file akan memperbarui seluruh dashboard dan monitoring secara otomatis.</p></div><a class="btn btn-light" href="{{ url_for('upload.upload_history') }}"><i class="fa-solid fa-clock-rotate-left"></i> Lihat Riwayat</a></div>
-<div class="upload-layout">
-  <article class="panel upload-card"><div class="upload-icon"><i class="fa-solid fa-file-arrow-up"></i></div><h2>Pilih file SLS</h2><p>Format XLSX atau CSV · maksimum 32 MB</p><form action="{{ url_for('upload.upload_data') }}" method="post" enctype="multipart/form-data" id="uploadForm"><label class="drop-zone" for="fileInput" id="dropZone"><input type="file" id="fileInput" name="file" accept=".xlsx,.csv" required><i class="fa-solid fa-cloud-arrow-up"></i><strong>Tarik file ke sini atau klik untuk memilih</strong><span id="fileName">Belum ada file dipilih</span></label><button class="btn btn-primary w-100" type="submit" id="uploadButton"><i class="fa-solid fa-gears"></i> Validasi dan Import Data</button><div class="upload-progress d-none" id="uploadProgress"><div class="spinner-border spinner-border-sm"></div><span>File sedang divalidasi dan diproses. Jangan tutup halaman ini.</span></div></form></article>
-  <aside class="panel guidance-card"><span class="eyebrow dark">Ketentuan import</span><h2>Yang dilakukan sistem</h2><ol class="process-list"><li><span>01</span><div><strong>Membaca satu sumber</strong><p>Hanya sheet bernama “sls” yang diproses; sheet pivot dan formula lain diabaikan.</p></div></li><li><span>02</span><div><strong>Memvalidasi penuh</strong><p>Kolom, kode wilayah, angka negatif, dan duplikasi konflik diperiksa sebelum data lama disentuh.</p></div></li><li><span>03</span><div><strong>Menghitung ulang</strong><p>Sudah Upload = Total − OPEN − DRAFT. Semua rekap dihitung backend.</p></div></li><li><span>04</span><div><strong>Mengganti secara transaksional</strong><p>Jika insert gagal, rollback menjaga data monitoring lama tetap tersedia.</p></div></li></ol><div class="info-note"><i class="fa-solid fa-circle-info"></i><span>Kode wilayah dibaca sebagai teks dan nol di depan dipertahankan.</span></div></aside>
-</div>
-{% endblock %}
-{% block scripts %}<script>
-const input=document.getElementById('fileInput'),zone=document.getElementById('dropZone'),nameBox=document.getElementById('fileName');input.addEventListener('change',()=>nameBox.textContent=input.files[0]?.name||'Belum ada file dipilih');['dragenter','dragover'].forEach(e=>zone.addEventListener(e,x=>{x.preventDefault();zone.classList.add('dragging')}));['dragleave','drop'].forEach(e=>zone.addEventListener(e,x=>{x.preventDefault();zone.classList.remove('dragging')}));zone.addEventListener('drop',e=>{input.files=e.dataTransfer.files;nameBox.textContent=input.files[0]?.name||'Belum ada file dipilih'});document.getElementById('uploadForm').addEventListener('submit',()=>{document.getElementById('uploadButton').disabled=true;document.getElementById('uploadProgress').classList.remove('d-none')});
-</script>{% endblock %}
 
+{% block title %}
+Upload Data SLS · SE2026
+{% endblock %}
+
+{% block page_id %}
+upload
+{% endblock %}
+
+{% block content %}
+
+<!-- ===================================================== -->
+<!-- JUDUL HALAMAN -->
+<!-- ===================================================== -->
+
+<div class="page-heading">
+    <div>
+        <span class="eyebrow dark">
+            Administrasi data
+        </span>
+
+        <h1>Upload Data SLS</h1>
+
+        <p>
+            Satu file akan memperbarui seluruh dashboard dan monitoring
+            secara otomatis.
+        </p>
+    </div>
+
+    <a
+        class="btn btn-light"
+        href="{{ url_for('upload.upload_history') }}"
+    >
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        Lihat Riwayat
+    </a>
+</div>
+
+
+<!-- ===================================================== -->
+<!-- TEMPLATE NAMA KOLOM -->
+<!-- ===================================================== -->
+
+<div class="upload-template-info">
+    <div class="upload-template-title">
+        <i class="fa-solid fa-table-columns"></i>
+
+        <div>
+            <strong>
+                Template kolom yang harus diunggah
+            </strong>
+
+            <span>
+                Baris pertama file Excel atau CSV harus menggunakan
+                nama kolom berikut.
+            </span>
+        </div>
+    </div>
+
+    <div class="upload-template-columns">
+        {% for item in template_columns %}
+            <code>{{ item.column }}</code>
+        {% else %}
+            <code>prov</code>
+            <code>kab</code>
+            <code>kec_code</code>
+            <code>kec_name</code>
+            <code>desa_code</code>
+            <code>desa_name</code>
+            <code>subsls_code</code>
+            <code>subsls_name</code>
+            <code>email</code>
+            <code>username</code>
+            <code>APPROVED.BY.Pengawas</code>
+            <code>COMPLETED.BY.Admin.Kabupaten</code>
+            <code>DRAFT</code>
+            <code>EDITED.BY.Admin.Kabupaten</code>
+            <code>EDITED.BY.Pengawas</code>
+            <code>OPEN</code>
+            <code>REJECTED.BY.Admin.Kabupaten</code>
+            <code>REJECTED.BY.Pengawas</code>
+            <code>REVOKED.BY.Admin.Kabupaten</code>
+            <code>REVOKED.BY.Pengawas</code>
+            <code>SUBMITTED.BY.Pencacah</code>
+            <code>SUBMITTED.RESPONDENT</code>
+            <code>total</code>
+            <code>email PML</code>
+            <code>PCL</code>
+            <code>PML</code>
+        {% endfor %}
+    </div>
+
+    <div class="upload-template-note">
+        <i class="fa-solid fa-circle-info"></i>
+
+        <span>
+            Nama kolom harus sama, tetapi urutan kolom boleh berbeda.
+        </span>
+    </div>
+
+    <a
+        href="{{ url_for('upload.download_template') }}"
+        class="btn btn-template-download"
+    >
+        <i class="fa-solid fa-file-excel"></i>
+        Download Template Excel
+    </a>
+</div>
+
+
+<!-- ===================================================== -->
+<!-- FORM UPLOAD DAN KETENTUAN IMPORT -->
+<!-- ===================================================== -->
+
+<div class="upload-layout">
+
+    <!-- FORM UPLOAD -->
+
+    <article class="panel upload-card">
+        <div class="upload-icon">
+            <i class="fa-solid fa-file-arrow-up"></i>
+        </div>
+
+        <h2>Pilih file SLS</h2>
+
+        <p>
+            Format XLSX atau CSV · maksimum
+            {{ max_file_size_mb|default(32) }} MB
+        </p>
+
+        <form
+            action="{{ url_for('upload.upload_data') }}"
+            method="post"
+            enctype="multipart/form-data"
+            id="uploadForm"
+        >
+            <label
+                class="drop-zone"
+                for="fileInput"
+                id="dropZone"
+            >
+                <input
+                    type="file"
+                    id="fileInput"
+                    name="file"
+                    accept=".xlsx,.csv"
+                    required
+                >
+
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+
+                <strong>
+                    Tarik file ke sini atau klik untuk memilih
+                </strong>
+
+                <span id="fileName">
+                    Belum ada file dipilih
+                </span>
+            </label>
+
+            <button
+                class="btn btn-primary w-100"
+                type="submit"
+                id="uploadButton"
+            >
+                <i class="fa-solid fa-gears"></i>
+                Validasi dan Import Data
+            </button>
+
+            <div
+                class="upload-progress d-none"
+                id="uploadProgress"
+            >
+                <div class="spinner-border spinner-border-sm"></div>
+
+                <span>
+                    File sedang divalidasi dan diproses.
+                    Jangan tutup halaman ini.
+                </span>
+            </div>
+        </form>
+    </article>
+
+
+    <!-- KETENTUAN IMPORT -->
+
+    <aside class="panel guidance-card">
+        <span class="eyebrow dark">
+            Ketentuan import
+        </span>
+
+        <h2>Yang dilakukan sistem</h2>
+
+        <ol class="process-list">
+            <li>
+                <span>01</span>
+
+                <div>
+                    <strong>Membaca satu sumber</strong>
+
+                    <p>
+                        Hanya sheet bernama “sls” yang diproses;
+                        sheet pivot dan formula lain diabaikan.
+                    </p>
+                </div>
+            </li>
+
+            <li>
+                <span>02</span>
+
+                <div>
+                    <strong>Memvalidasi penuh</strong>
+
+                    <p>
+                        Kolom, kode wilayah, angka negatif, dan
+                        duplikasi konflik diperiksa sebelum data
+                        lama disentuh.
+                    </p>
+                </div>
+            </li>
+
+            <li>
+                <span>03</span>
+
+                <div>
+                    <strong>Menghitung ulang</strong>
+
+                    <p>
+                        Sudah Upload = Total − OPEN − DRAFT.
+                        Semua rekap dihitung backend.
+                    </p>
+                </div>
+            </li>
+
+            <li>
+                <span>04</span>
+
+                <div>
+                    <strong>Mengganti secara transaksional</strong>
+
+                    <p>
+                        Jika insert gagal, rollback menjaga data
+                        monitoring lama tetap tersedia.
+                    </p>
+                </div>
+            </li>
+        </ol>
+
+        <div class="info-note">
+            <i class="fa-solid fa-circle-info"></i>
+
+            <span>
+                Kode wilayah dibaca sebagai teks dan nol di depan
+                dipertahankan.
+            </span>
+        </div>
+    </aside>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+    const input = document.getElementById('fileInput');
+    const zone = document.getElementById('dropZone');
+    const nameBox = document.getElementById('fileName');
+    const uploadForm = document.getElementById('uploadForm');
+    const uploadButton = document.getElementById('uploadButton');
+    const uploadProgress = document.getElementById('uploadProgress');
+
+    input.addEventListener('change', () => {
+        nameBox.textContent =
+            input.files[0]?.name || 'Belum ada file dipilih';
+    });
+
+    ['dragenter', 'dragover'].forEach((eventName) => {
+        zone.addEventListener(eventName, (event) => {
+            event.preventDefault();
+            zone.classList.add('dragging');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach((eventName) => {
+        zone.addEventListener(eventName, (event) => {
+            event.preventDefault();
+            zone.classList.remove('dragging');
+        });
+    });
+
+    zone.addEventListener('drop', (event) => {
+        const droppedFiles = event.dataTransfer.files;
+
+        if (!droppedFiles.length) {
+            return;
+        }
+
+        const transfer = new DataTransfer();
+        transfer.items.add(droppedFiles[0]);
+
+        input.files = transfer.files;
+
+        nameBox.textContent =
+            input.files[0]?.name || 'Belum ada file dipilih';
+    });
+
+    uploadForm.addEventListener('submit', () => {
+        uploadButton.disabled = true;
+        uploadProgress.classList.remove('d-none');
+    });
+</script>
+
+{% endblock %}
