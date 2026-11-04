@@ -49,6 +49,10 @@ def create_app(config_class=Config):
     @app.before_request
     def ensure_extra_tables():
         nonlocal _tables_initialized
+        if os.getenv("VERCEL"):
+            from config import ensure_vercel_sqlite_seeded
+
+            ensure_vercel_sqlite_seeded()
         if not _tables_initialized:
             try:
                 import models.activity_log
@@ -77,6 +81,9 @@ def create_app(config_class=Config):
                 _tables_initialized = True
             except Exception:
                 db.session.rollback()
+        from routes.auth_routes import _sync_registered_snapshots
+
+        _sync_registered_snapshots()
 
     @app.route("/")
     def index():

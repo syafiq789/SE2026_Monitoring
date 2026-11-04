@@ -1,4 +1,5 @@
 import os
+import shutil
 from datetime import timedelta
 from pathlib import Path
 from urllib.parse import quote_plus
@@ -11,9 +12,31 @@ from dotenv import load_dotenv
 # =========================================================
 BASE_DIR = Path(__file__).resolve().parent
 ENV_FILE = BASE_DIR / ".env"
+BUNDLED_SQLITE_DB = BASE_DIR / "se2026_bundled.db"
+VERCEL_TMP_SQLITE_DB = Path("/tmp/se2026_monitoring.db")
 
 # override=True agar nilai terbaru dari .env selalu digunakan
 load_dotenv(ENV_FILE, override=True)
+
+
+def ensure_vercel_sqlite_seeded() -> Path:
+    """
+    Menyalin database awal (se2026_bundled.db) ke /tmp/se2026_monitoring.db
+    di Vercel apabila instance serverless baru belum memiliki file database.
+    """
+    try:
+        if (
+            BUNDLED_SQLITE_DB.exists()
+            and (
+                not VERCEL_TMP_SQLITE_DB.exists()
+                or VERCEL_TMP_SQLITE_DB.stat().st_size < 100_000
+            )
+        ):
+            VERCEL_TMP_SQLITE_DB.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(BUNDLED_SQLITE_DB, VERCEL_TMP_SQLITE_DB)
+    except Exception:
+        pass
+    return VERCEL_TMP_SQLITE_DB
 
 
 def env_bool(name: str, default: bool = False) -> bool:
@@ -106,7 +129,8 @@ class Config:
     encoded_password = quote_plus(DB_PASSWORD)
 
     if IS_VERCEL and not os.getenv("DATABASE_URL") and DB_HOST in {"127.0.0.1", "localhost"}:
-        DEFAULT_DATABASE_URL = "sqlite:////tmp/se2026_monitoring.db"
+        ensure_vercel_sqlite_seeded()
+        DEFAULT_DATABASE_URL = f"sqlite:///{VERCEL_TMP_SQLITE_DB.as_posix()}"
     else:
         DEFAULT_DATABASE_URL = (
             f"mysql+pymysql://{encoded_user}:{encoded_password}"
