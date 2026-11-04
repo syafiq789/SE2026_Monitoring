@@ -52,36 +52,47 @@ def create_app(config_class=Config):
         if not _tables_initialized:
             try:
                 import models.activity_log
+                from models.user import User
+
                 db.create_all()
+                if User.query.count() == 0:
+                    admin_user = User(
+                        nama_lengkap="Administrator",
+                        username="admin",
+                        email="admin@se2026.local",
+                        role="admin",
+                        is_active=True,
+                    )
+                    admin_user.set_password("admin123")
+                    reg_user = User(
+                        nama_lengkap="Pengguna Monitoring",
+                        username="user",
+                        email="user@se2026.local",
+                        role="user",
+                        is_active=True,
+                    )
+                    reg_user.set_password("user123")
+                    db.session.add_all([admin_user, reg_user])
+                    db.session.commit()
                 _tables_initialized = True
             except Exception:
-                pass
+                db.session.rollback()
 
     @app.route("/")
     def index():
-        if session.get("user_id"):
-            from models.user import User
+        from utils.decorators import _current_user
 
-            try:
-                user = db.session.get(User, session["user_id"])
-                if user and user.is_active:
-                    return redirect(url_for("dashboard.dashboard"))
-            except Exception:
-                db.session.rollback()
-            session.clear()
+        user = _current_user()
+        if user and user.is_active:
+            return redirect(url_for("dashboard.dashboard"))
+        session.clear()
         return redirect(url_for("auth.login"))
 
     @app.context_processor
     def inject_globals():
-        from models.user import User
+        from utils.decorators import _current_user
 
-        current_user = None
-        if session.get("user_id"):
-            try:
-                current_user = db.session.get(User, session["user_id"])
-            except Exception:
-                db.session.rollback()
-        return {"current_user": current_user}
+        return {"current_user": _current_user()}
 
     @app.errorhandler(403)
     def forbidden(_error):

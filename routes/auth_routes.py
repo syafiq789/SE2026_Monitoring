@@ -18,9 +18,64 @@ def _safe_next(value):
     return url_for("dashboard.dashboard")
 
 
+def _user_to_snapshot(user: User) -> dict:
+    return {
+        "id": user.id,
+        "nama_lengkap": user.nama_lengkap,
+        "username": user.username,
+        "email": user.email,
+        "password_hash": user.password_hash,
+        "role": user.role,
+        "is_active": bool(user.is_active),
+    }
+
+
+def _store_user_session(user: User, remember: bool = True, pending_users: list | None = None):
+    saved_pending = pending_users if pending_users is not None else session.get("registered_snapshots", [])
+    session.clear()
+    session["user_id"] = user.id
+    session["user_snapshot"] = _user_to_snapshot(user)
+    if saved_pending:
+        session["registered_snapshots"] = saved_pending[-5:]
+    session.permanent = remember
+
+
+def _sync_registered_snapshots():
+    """
+    Memastikan akun yang baru diregistrasi tetap tersedia meskipun Vercel
+    memindahkan request ke instance serverless baru (/tmp berbeda).
+    """
+    snapshots = session.get("registered_snapshots") or []
+    if not snapshots:
+        return
+    try:
+        changed = False
+        for snap in snapshots:
+            exists = User.query.filter(
+                (User.username == snap.get("username")) | (User.email == snap.get("email"))
+            ).first()
+            if not exists and snap.get("username") and snap.get("email"):
+                restored = User(
+                    nama_lengkap=snap.get("nama_lengkap", "Pengguna"),
+                    username=snap["username"],
+                    email=snap["email"],
+                    password_hash=snap.get("password_hash", ""),
+                    role=snap.get("role", "user"),
+                    is_active=bool(snap.get("is_active", True)),
+                )
+                db.session.add(restored)
+                changed = True
+        if changed:
+            db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        _sync_registered_snapshots()
+
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
         remember = request.form.get("remember") == "1"
@@ -43,9 +98,7 @@ def login():
             flash("Akun Anda sedang dinonaktifkan.", "warning")
             return render_template("login.html")
 
-        session.clear()
-        session["user_id"] = user.id
-        session.permanent = remember
+        _store_user_session(user, remember=remember)
 
         log_activity(
             user_id=user.id,
@@ -64,6 +117,8 @@ def login():
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+        _sync_registered_snapshots()
+
         nama = request.form.get("nama_lengkap", "").strip()
         username = request.form.get("username", "").strip()
         email = request.form.get("email", "").strip().lower()
@@ -92,6 +147,12 @@ def register():
             try:
                 db.session.add(user)
                 db.session.commit()
+
+                snapshots = list(session.get("registered_snapshots") or [])
+                snapshots.append(_user_to_snapshot(user))
+                session["registered_snapshots"] = snapshots[-5:]
+                session.permanent = True
+
                 log_activity(
                     user_id=user.id,
                     action="REGISTER",
@@ -115,6 +176,7 @@ def register():
 @login_required
 def logout():
     uid = session.get("user_id")
+    saved_pending = session.get("registered_snapshots", [])
     log_activity(
         user_id=uid,
         action="LOGOUT",
@@ -123,5 +185,7 @@ def logout():
         ip_address=request.remote_addr,
     )
     session.clear()
+    if saved_pending:
+        session["registered_snapshots"] = saved_pending[-5:]
     flash("Anda telah logout.", "info")
     return redirect(url_for("auth.login"))
