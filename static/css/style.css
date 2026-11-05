@@ -1735,4 +1735,92 @@ body[data-page^="monitoring-"] .table-responsive::-webkit-scrollbar-thumb {
   border-color: #d96317;
   color: #ffffff;
 }
-
+
+
+/* =========================================================
+   DATATABLES 2 & BOOTSTRAP 5 STYLING INTEGRATION
+   ========================================================= */
+.dt-container,
+.dataTables_wrapper {
+  padding: 12px 0 6px 0;
+}
+
+.dt-container .dt-search,
+.dataTables_filter {
+  margin-bottom: 12px;
+}
+
+.dt-container .dt-search input,
+.dataTables_filter input {
+  border: 1px solid #dfd3c8 !important;
+  border-radius: 8px !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  outline: none !important;
+  background-color: #ffffff !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.dt-container .dt-search input:focus,
+.dataTables_filter input:focus {
+  border-color: var(--orange-600, #eb781c) !important;
+  box-shadow: 0 0 0 3px rgba(235, 120, 28, 0.15) !important;
+}
+
+.dt-container .dt-length select,
+.dataTables_length select {
+  border: 1px solid #dfd3c8 !important;
+  border-radius: 8px !important;
+  padding: 6px 28px 6px 12px !important;
+  font-size: 13px !important;
+  background-color: #ffffff !important;
+}
+
+.dt-container .dt-info,
+.dataTables_info {
+  font-size: 12px !important;
+  color: #6c5a4f !important;
+  padding-top: 10px !important;
+  font-weight: 500 !important;
+}
+
+.dt-container .dt-paging,
+.dataTables_paginate {
+  padding-top: 8px !important;
+}
+
+.dt-container .page-item.active .page-link,
+.dataTables_paginate .page-item.active .page-link {
+  background-color: var(--orange-600, #eb781c) !important;
+  border-color: var(--orange-600, #eb781c) !important;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+.dt-container .page-link,
+.dataTables_paginate .page-link {
+  color: #4b382d !important;
+  border-color: #eadfd5 !important;
+  border-radius: 6px !important;
+  margin: 0 2px !important;
+  font-size: 12px !important;
+  padding: 6px 11px !important;
+}
+
+.dt-container .page-link:hover,
+.dataTables_paginate .page-link:hover {
+  background-color: #f7ede4 !important;
+  border-color: #dfd3c8 !important;
+  color: var(--orange-700, #d96317) !important;
+}
+
+div.dt-processing,
+.dataTables_processing {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid #e2d7cc !important;
+  border-radius: 10px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08) !important;
+  font-weight: 600 !important;
+  color: #3e2e25 !important;
+  padding: 12px 24px !important;
+}

@@ -11,6 +11,8 @@ from services.monitoring_service import (
     get_kecamatan_rows,
     get_pcl_rows,
     get_pml_rows,
+    get_sls_count,
+    get_sls_datatable,
     get_sls_rows,
 )
 from utils.decorators import login_required
@@ -46,13 +48,44 @@ def _context(level, rows_function):
 )
 @login_required
 def monitoring_sls():
+    filters = filters_from_request(request.args)
+    count = get_sls_count(filters)
     return render_template(
         "monitoring_sls.html",
-        **_context(
-            "sls",
-            get_sls_rows,
+        rows=[],
+        rows_count=count,
+        filters=filters,
+        filter_options=filter_options(
+            filters.get("kec_code"),
+            filters.get("pml_id"),
         ),
+        level="sls",
     )
+
+
+@monitoring_bp.route(
+    "/api/monitoring/sls-dt"
+)
+@login_required
+def sls_datatable():
+    draw = request.args.get("draw", 1, type=int)
+    start = request.args.get("start", 0, type=int)
+    length = request.args.get("length", 25, type=int)
+    search_value = request.args.get("search[value]", "", type=str)
+    order_col = request.args.get("order[0][column]", 1, type=int)
+    order_dir = request.args.get("order[0][dir]", "asc", type=str)
+    filters = filters_from_request(request.args)
+
+    result = get_sls_datatable(
+        draw=draw,
+        start=start,
+        length=length,
+        search_value=search_value,
+        order_col=order_col,
+        order_dir=order_dir,
+        filters=filters,
+    )
+    return jsonify(result)
 
 
 @monitoring_bp.route(

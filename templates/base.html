@@ -27,6 +27,12 @@
     rel="stylesheet"
   >
 
+  <!-- DataTables Bootstrap 5 CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.min.css"
+  >
+
   <!-- Font Awesome -->
   <link
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
@@ -287,6 +293,12 @@
   <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
   ></script>
+
+  <!-- jQuery & DataTables 2 (Bootstrap 5) -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/2.1.8/js/dataTables.bootstrap5.min.js"></script>
+  <script src="{{ url_for('static', filename='js/datatable.js') }}?v=2"></script>
 
   <!-- Chart.js harus dimuat sebelum static/js/chart.js -->
   <script

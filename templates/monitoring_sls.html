@@ -1,15 +1,250 @@
-{% extends 'base.html' %}{% from '_macros.html' import progress_bar, status_badge %}
-{% block title %}Monitoring SLS · SE2026{% endblock %}{% block page_id %}monitoring-sls{% endblock %}
-{% block content %}
-<div class="page-heading"><div><span class="eyebrow dark">Detail unit wilayah</span><h1>Monitoring SLS</h1><p>{{ rows|length }} baris sesuai filter aktif.</p></div>{% if current_user.role == 'admin' %}<div class="button-group"><a class="btn btn-outline-primary" href="{{ url_for('export.export_sls_csv', **request.args) }}"><i class="fa-solid fa-file-csv"></i> CSV</a><a class="btn btn-primary" href="{{ url_for('export.export_sls_excel', **request.args) }}"><i class="fa-solid fa-file-excel"></i> Excel</a></div>{% endif %}</div>
-{% include '_filters.html' %}
-<article class="panel table-panel"><div class="panel-title"><div><span>Data terperinci</span><h2>Daftar Sub-SLS</h2></div><span class="record-count">{{ rows|length }} data</span></div><div class="table-responsive"><table class="table data-table align-middle" id="slsTable"><thead><tr><th>No</th><th>Kode Kecamatan</th><th>Nama Kecamatan</th><th>Kode Desa</th><th>Nama Desa</th><th>ID Sub-SLS</th><th>Nama Sub-SLS</th><th>Nama PML</th><th>Nama PCL</th><th>Total</th><th>Open</th><th>Draft</th><th>Sudah Upload</th><th>Belum Upload</th><th>Approved</th><th>Progress</th><th>Status</th><th>Detail</th></tr></thead><tbody>
-{% for row in rows %}<tr><td>{{ loop.index }}</td><td><span class="code-pill">{{ row.kec_code }}</span></td><td>{{ row.kec_name }}</td><td><span class="code-pill">{{ row.desa_code }}</span></td><td>{{ row.desa_name }}</td><td><span class="code-pill">{{ row.subsls_code }}</span></td><td>{{ row.subsls_name }}</td><td>{{ row.nama_pml }}</td><td>{{ row.nama_pcl }}</td><td>{{ row.total_target }}</td><td>{{ row.open_count }}</td><td>{{ row.draft_count }}</td><td class="text-success fw-semibold">{{ row.processed_count }}</td><td class="text-danger fw-semibold">{{ row.remaining_count }}</td><td>{{ row.approved_by_pengawas }}</td><td class="progress-cell">{{ progress_bar(row.progress) }}</td><td>{{ status_badge(row.progress_status) }}</td><td><button class="btn btn-sm btn-light detail-button" data-detail="{{ row|tojson|forceescape }}" data-bs-toggle="modal" data-bs-target="#detailModal"><i class="fa-regular fa-eye"></i> Lihat Detail</button></td></tr>{% endfor %}
-</tbody></table></div></article>
-<div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailTitle" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><div><span class="eyebrow dark">Rincian workflow</span><h2 class="modal-title fs-5" id="detailTitle">Detail SLS</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div><div class="modal-body"><div class="detail-identity" id="detailIdentity"></div><div class="workflow-grid" id="workflowGrid"></div></div></div></div></div>
-{% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='js/filter.js') }}"></script><script>
-const labels={approved_by_pengawas:'Approved Pengawas',completed_by_admin_kabupaten:'Completed Admin Kabupaten',draft_count:'Draft',edited_by_admin_kabupaten:'Edited Admin Kabupaten',edited_by_pengawas:'Edited Pengawas',open_count:'Open',rejected_by_admin_kabupaten:'Rejected Admin Kabupaten',rejected_by_pengawas:'Rejected Pengawas',revoked_by_admin_kabupaten:'Revoked Admin Kabupaten',revoked_by_pengawas:'Revoked Pengawas',submitted_by_pencacah:'Submitted Pencacah',submitted_respondent:'Submitted Respondent'};
-document.querySelectorAll('.detail-button').forEach(button=>button.addEventListener('click',()=>{const row=JSON.parse(button.dataset.detail);document.getElementById('detailTitle').textContent=`${row.subsls_code} · ${row.subsls_name}`;document.getElementById('detailIdentity').innerHTML=`<strong>${row.kec_name} / ${row.desa_name}</strong><span>PML: ${row.nama_pml} · PCL: ${row.nama_pcl}</span>`;document.getElementById('workflowGrid').innerHTML=Object.entries(labels).map(([key,label])=>`<article><span>${label}</span><strong>${row[key]}</strong></article>`).join('')+`<article class="accent"><span>Sudah Upload</span><strong>${row.processed_count}</strong></article><article class="accent"><span>Progress</span><strong>${row.progress.toFixed(2)}%</strong></article>`;}));
-</script>{% endblock %}
+{% extends 'base.html' %}
+{% from '_macros.html' import progress_bar, status_badge %}
 
+{% block title %}Monitoring SLS · SE2026{% endblock %}
+{% block page_id %}monitoring-sls{% endblock %}
+
+{% block content %}
+<div class="page-heading">
+  <div>
+    <span class="eyebrow dark">Detail unit wilayah</span>
+    <h1>Monitoring SLS</h1>
+    <p><strong id="slsActiveCount">{{ rows_count if rows_count is defined else rows|length }}</strong> baris sesuai filter aktif.</p>
+  </div>
+  {% if current_user.role == 'admin' %}
+  <div class="button-group">
+    <a class="btn btn-outline-primary" href="{{ url_for('export.export_sls_csv', **request.args) }}">
+      <i class="fa-solid fa-file-csv"></i> CSV
+    </a>
+    <a class="btn btn-primary" href="{{ url_for('export.export_sls_excel', **request.args) }}">
+      <i class="fa-solid fa-file-excel"></i> Excel
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+{% include '_filters.html' %}
+
+<article class="panel table-panel">
+  <div class="panel-title">
+    <div>
+      <span>Data terperinci (DataTables Server-Side)</span>
+      <h2>Daftar Sub-SLS</h2>
+    </div>
+    <span class="record-count" id="slsPanelCount">{{ rows_count if rows_count is defined else rows|length }} data</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table data-table align-middle w-100" id="slsTable">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Kode Kecamatan</th>
+          <th>Nama Kecamatan</th>
+          <th>Kode Desa</th>
+          <th>Nama Desa</th>
+          <th>ID Sub-SLS</th>
+          <th>Nama Sub-SLS</th>
+          <th>Nama PML</th>
+          <th>Nama PCL</th>
+          <th>Total</th>
+          <th>Open</th>
+          <th>Draft</th>
+          <th>Sudah Upload</th>
+          <th>Belum Upload</th>
+          <th>Approved</th>
+          <th>Progress</th>
+          <th>Status</th>
+          <th>Detail</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Data dimuat cepat dan efisien via DataTables Server-Side AJAX -->
+      </tbody>
+    </table>
+  </div>
+</article>
+
+<!-- Modal Detail Workflow -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow dark">Rincian workflow</span>
+          <h2 class="modal-title fs-5" id="detailTitle">Detail SLS</h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-identity" id="detailIdentity"></div>
+        <div class="workflow-grid" id="workflowGrid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/filter.js') }}"></script>
+<script>
+  const labels = {
+    approved_by_pengawas: 'Approved Pengawas',
+    completed_by_admin_kabupaten: 'Completed Admin Kabupaten',
+    draft_count: 'Draft',
+    edited_by_admin_kabupaten: 'Edited Admin Kabupaten',
+    edited_by_pengawas: 'Edited Pengawas',
+    open_count: 'Open',
+    rejected_by_admin_kabupaten: 'Rejected Admin Kabupaten',
+    rejected_by_pengawas: 'Rejected Pengawas',
+    revoked_by_admin_kabupaten: 'Revoked Admin Kabupaten',
+    revoked_by_pengawas: 'Revoked Pengawas',
+    submitted_by_pencacah: 'Submitted Pencacah',
+    submitted_respondent: 'Submitted Respondent'
+  };
+
+  // Renderers untuk komponen visual
+  function renderProgressBar(val) {
+    const value = Number(val) || 0;
+    const tone = value >= 100 ? 'success' : (value > 0 ? 'warning' : 'danger');
+    const width = Math.min(Math.max(value, 0), 100);
+    return `
+      <div class="progress progress-slim" role="progressbar" aria-label="Progress ${value.toFixed(2)} persen" aria-valuenow="${value}" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-bar bg-${tone}" style="width: ${width}%"></div>
+      </div>
+      <small class="progress-value">${value.toFixed(2)}%</small>
+    `;
+  }
+
+  function renderStatusBadge(status) {
+    const css = {
+      'Data Kosong': 'secondary',
+      'Belum Mulai': 'danger',
+      'Sedang Proses': 'warning',
+      'Selesai': 'success'
+    };
+    const badgeClass = css[status] || 'secondary';
+    return `<span class="badge text-bg-${badgeClass}">${status || '-'}</span>`;
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!window.jQuery || !jQuery.fn.DataTable) return;
+
+    // Ambil parameter filter aktif dari URL saat ini
+    const queryParams = new URLSearchParams(window.location.search);
+
+    const table = jQuery('#slsTable').DataTable({
+      processing: true,
+      serverSide: true,
+      responsive: false,
+      scrollX: true,
+      pageLength: 25,
+      lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+      order: [[1, 'asc']], // Default urut berdasarkan Kode Kecamatan
+      ajax: {
+        url: '{{ url_for("monitoring.sls_datatable") }}',
+        type: 'GET',
+        data: function (d) {
+          // Teruskan filter pencarian dropdown (kec_code, desa_code, pml_id, dll)
+          queryParams.forEach((value, key) => {
+            if (key !== 'page' && key !== 'length') {
+              d[key] = value;
+            }
+          });
+        },
+        dataSrc: function (json) {
+          // Perbarui badge jumlah data di header
+          const total = json.recordsFiltered !== undefined ? json.recordsFiltered : json.recordsTotal;
+          const activeEl = document.getElementById('slsActiveCount');
+          const panelEl = document.getElementById('slsPanelCount');
+          if (activeEl) activeEl.textContent = Number(total).toLocaleString('id-ID');
+          if (panelEl) panelEl.textContent = Number(total).toLocaleString('id-ID') + ' data';
+          return json.data;
+        }
+      },
+      columns: [
+        { data: 'no', orderable: false, className: 'text-muted' },
+        {
+          data: 'kec_code',
+          render: (data) => `<span class="code-pill">${data}</span>`
+        },
+        { data: 'kec_name', className: 'fw-semibold' },
+        {
+          data: 'desa_code',
+          render: (data) => `<span class="code-pill">${data}</span>`
+        },
+        { data: 'desa_name' },
+        {
+          data: 'subsls_code',
+          render: (data) => `<span class="code-pill">${data}</span>`
+        },
+        { data: 'subsls_name' },
+        { data: 'nama_pml' },
+        { data: 'nama_pcl' },
+        { data: 'total_target' },
+        { data: 'open_count' },
+        { data: 'draft_count' },
+        {
+          data: 'processed_count',
+          className: 'text-success fw-semibold'
+        },
+        {
+          data: 'remaining_count',
+          className: 'text-danger fw-semibold'
+        },
+        { data: 'approved_by_pengawas' },
+        {
+          data: 'progress',
+          className: 'progress-cell',
+          render: (data) => renderProgressBar(data)
+        },
+        {
+          data: 'progress_status',
+          render: (data) => renderStatusBadge(data)
+        },
+        {
+          data: null,
+          orderable: false,
+          searchable: false,
+          render: function (data, type, row) {
+            const rowJson = encodeURIComponent(JSON.stringify(row));
+            return `<button class="btn btn-sm btn-light detail-button" data-detail="${rowJson}" data-bs-toggle="modal" data-bs-target="#detailModal"><i class="fa-regular fa-eye"></i> Detail</button>`;
+          }
+        }
+      ],
+      language: {
+        processing: '<div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div> Memuat data SLS...',
+        search: 'Cari SLS / Desa / Petugas:',
+        searchPlaceholder: 'Ketik pencarian...',
+        lengthMenu: 'Tampilkan _MENU_ baris',
+        info: 'Menampilkan _START_–_END_ dari _TOTAL_ SLS',
+        infoEmpty: '0 data SLS',
+        infoFiltered: '(dari total _MAX_ SLS)',
+        zeroRecords: 'Tidak ada data Sub-SLS yang cocok',
+        emptyTable: 'Belum ada data Sub-SLS tersedia',
+        paginate: {
+          first: '<i class="fa-solid fa-angles-left"></i>',
+          last: '<i class="fa-solid fa-angles-right"></i>',
+          next: '<i class="fa-solid fa-angle-right"></i>',
+          previous: '<i class="fa-solid fa-angle-left"></i>'
+        }
+      }
+    });
+
+    // Event listener Modal Detail SLS dengan event delegation
+    jQuery(document).on('click', '.detail-button', function () {
+      try {
+        const raw = decodeURIComponent(this.dataset.detail);
+        const row = JSON.parse(raw);
+        document.getElementById('detailTitle').textContent = `${row.subsls_code} · ${row.subsls_name}`;
+        document.getElementById('detailIdentity').innerHTML = `<strong>${row.kec_name} / ${row.desa_name}</strong><span>PML: ${row.nama_pml} · PCL: ${row.nama_pcl}</span>`;
+        document.getElementById('workflowGrid').innerHTML = Object.entries(labels).map(([key, label]) =>
+          `<article><span>${label}</span><strong>${row[key] ?? 0}</strong></article>`
+        ).join('') +
+          `<article class="accent"><span>Sudah Upload</span><strong>${row.processed_count}</strong></article><article class="accent"><span>Progress</span><strong>${(Number(row.progress) || 0).toFixed(2)}%</strong></article>`;
+      } catch (err) {
+        console.error('Gagal membuka modal detail:', err);
+      }
+    });
+  });
+</script>
+{% endblock %}

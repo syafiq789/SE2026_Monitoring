@@ -19,8 +19,15 @@ def test_key_templates_render_and_endpoints_resolve():
             filter_options=options, level="sls",
         )
         assert "/export/sls/excel?kec_code=010" in html
+        assert "slsTable" in html
+        assert "DataTable" in html
     with app.test_request_context("/download"):
         html = render_template("download.html", current_user=user)
         assert "/export/kecamatan/excel" in html
         assert "/export/pml/csv" in html
 
+
+def test_sls_datatable_endpoint_registered():
+    app = create_app()
+    routes = {rule.rule for rule in app.url_map.iter_rules()}
+    assert "/api/monitoring/sls-dt" in routes
