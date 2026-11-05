@@ -89,7 +89,13 @@ def read_sls_source(file_path: str | Path) -> tuple[pd.DataFrame, str]:
         if extension != ".xlsx":
             raise ImportValidationError("Format file tidak didukung. Gunakan file XLSX atau CSV.")
 
-        excel = pd.ExcelFile(path, engine="openpyxl")
+        excel_engine = "calamine"
+        try:
+            excel = pd.ExcelFile(path, engine=excel_engine)
+        except Exception:
+            excel_engine = "openpyxl"
+            excel = pd.ExcelFile(path, engine=excel_engine)
+
         selected = next((name for name in excel.sheet_names if name.strip().lower() == "sls"), None)
         if not selected:
             selected = next((name for name in excel.sheet_names if _sheet_has_sls_columns(excel, name)), None)
@@ -102,6 +108,7 @@ def read_sls_source(file_path: str | Path) -> tuple[pd.DataFrame, str]:
             sheet_name=selected,
             dtype=str,
             keep_default_na=False,
+            engine=excel_engine,
         )
         return frame, selected
     except ImportValidationError:
@@ -179,7 +186,8 @@ def prepare_import_data(file_path: str | Path) -> dict:
         raise ImportValidationError("Data wajib tidak lengkap: " + "; ".join(row_errors))
 
     records = []
-    for index, row in frame.iterrows():
+    rows_dict = frame.to_dict(orient="records")
+    for index, row in enumerate(rows_dict):
         calculation = calculate_progress(row["total_target"], row["open_count"], row["draft_count"])
         if calculation.warning:
             warnings.append(f"Baris {index + 2}: {calculation.warning}")
