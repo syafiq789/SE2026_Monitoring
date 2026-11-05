@@ -1,3 +1,13 @@
+"""
+Sistem Informasi Monitoring Sensus Ekonomi 2026 (SE2026)
+BPS Kabupaten Banyuwangi
+
+File ini merupakan Application Factory utama Flask yang bertugas:
+1. Menginisialisasi instance Flask dan ekstensi database SQLAlchemy.
+2. Mendaftarkan seluruh controller modular (Blueprints) dari folder routes/.
+3. Mengatur penanganan sesi, filter template Jinja2, dan middleware Vercel.
+"""
+
 import logging
 import os
 

@@ -1,3 +1,12 @@
+"""
+Konfigurasi Sistem SE2026 Monitoring BPS Banyuwangi
+
+File ini mengatur seluruh variabel konfigurasi aplikasi:
+1. Membaca variabel lingkungan dari file .env (database, secret key, port).
+2. Menentukan URI koneksi database (MySQL / MariaDB / SQLite).
+3. Mengatur persistensi database pada lingkungan cloud serverless Vercel (/tmp).
+"""
+
 import os
 import shutil
 from datetime import timedelta

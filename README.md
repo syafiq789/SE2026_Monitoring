@@ -15,7 +15,7 @@ Dashboard Monitoring Sensus Ekonomi 2026 untuk BPS Kabupaten Banyuwangi. Aplikas
 - Export CSV/Excel mengikuti filter, khusus Admin.
 - Riwayat upload, manajemen user, dan API Bearer Token yang disimpan sebagai hash.
 - **[Fitur TA] Peta Spasial (WebGIS Banyuwangi):** Visualisasi sebaran progres lapangan 25 kecamatan menggunakan Leaflet.js dengan klasifikasi warna status (Optimal, Moderat, Perlu Akselerasi) dan filter interaktif.
-- **[Fitur TA] Tindak Lanjut & Broadcast Pengingat (WhatsApp / Email):** Generator pesan pengingat otomatis berbasis capaian *real-time* untuk PCL/PML serta template broadcast rekap grup WhatsApp Kecamatan dalam 1 klik.
+- **[Fitur TA] Koordinasi Lapangan & Pengingat WhatsApp:** Generator pesan pengingat otomatis berbasis capaian *real-time* untuk PCL/PML via WhatsApp 1-Klik serta filter petugas prioritas percepatan (<50%).
 - **[Fitur TA] Audit Trail & Activity Log:** Pencatatan otomatis riwayat aksi sensitif (login, upload sensus, ekspor data, dan tindak lanjut petugas) untuk tata kelola keamanan sistem.
 - Error handler ramah pengguna dan log aplikasi berotasi.
 - Tampilan responsif dengan tema coklat, oranye, emas, cream, dan putih.
