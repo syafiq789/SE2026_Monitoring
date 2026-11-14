@@ -34,7 +34,7 @@ Progress agregat selalu dihitung sebagai `SUM(processed) / SUM(total)`, bukan ra
 
 1. Jalankan Laragon dan klik **Start All**.
 2. Import [database.sql](database.sql) melalui HeidiSQL atau phpMyAdmin. Script membuat database `se2026_monitoring`, seluruh tabel, index, foreign key, dan lima view.
-3. Salin `.env.example` menjadi `.env`. Konfigurasi default sudah sesuai MySQL Laragon:
+3. Salin `.env.example` menjadi `.env`. Ganti `SECRET_KEY=replace-with-a-random-secret` dengan kunci acak unik (minimal 32 byte; misalnya hasil `python -c "import secrets; print(secrets.token_hex(32))"`). Aplikasi menolak kunci kosong atau kunci demo lama. Nilai environment deployment mengungguli `.env`. Konfigurasi database default sesuai MySQL Laragon:
 
 ```env
 DB_HOST=127.0.0.1
@@ -62,6 +62,15 @@ python app.py
 `requirements.txt` memakai Pandas 2.2.3 secara otomatis pada Python 3.13 (seperti runtime Laragon terbaru) karena versi itu menyediakan dukungan/wheel Python 3.13; Python 3.12 ke bawah tetap memakai versi 2.2.2 sesuai spesifikasi.
 
 Buka `http://127.0.0.1:5000`.
+
+## Konfigurasi deployment dan perubahan keamanan
+
+- Registrasi publik hanya membuat role `user`. Set `ALLOW_PUBLIC_REGISTER=False` untuk menutup registrasi; admin baru dibuat oleh admin melalui `/admin/register`.
+- Database adalah otoritas akun. Cookie lama tidak akan membuat ulang akun yang sudah dihapus. Login ulang diperlukan setelah perubahan kunci sesi. Jika kunci demo pernah digunakan, rotasi `SECRET_KEY` untuk membatalkan cookie lama dan tinjau akun admin yang sudah terdaftar.
+- Aplikasi tidak lagi membuat tabel/akun default pada setiap request. Inisialisasi skema melalui `database.sql` atau `python seed_users.py` secara eksplisit sebelum menjalankan server. `seed_users.py` menyediakan akun demo untuk pengembangan; nonaktifkan/ganti akun tersebut sebelum operasional.
+- **Vercel memerlukan `DATABASE_URL` menuju database MySQL/MariaDB eksternal persisten dan `SECRET_KEY` unik.** Fallback SQLite `/tmp` dan penyalinan ulang database bawaan dihapus. Deploy tanpa konfigurasi tersebut akan ditolak. Cadangkan dan migrasikan data lama ke database persisten sebelum rollout; file `/tmp` bukan penyimpanan lintas instance. File upload/ekspor pada Vercel tetap sementara.
+- CSV kosong setelah normalisasi ditolak. Semua penghitung wajib bilangan bulat nonnegatif hingga 2147483647; input salah tidak diubah diam-diam menjadi nol. Perbedaan penugasan untuk kunci SLS geografis yang sama adalah konflik, bukan record tambahan.
+- Setiap artifact ekspor memiliki nama unik. Nilai identitas berawalan formula diberi awalan apostrof agar tetap berupa teks di CSV/XLSX.
 
 ## Akun awal
 
@@ -119,13 +128,15 @@ GET /api/chart-data
 GET /api/filter-data?kec_code=010&pml_id=1
 ```
 
-Admin dapat membuat Bearer Token melalui menu **API Token**. Nilai token hanya ditampilkan sekali.
+Admin dapat membuat Bearer Token melalui menu **API Token** (`/admin/api-tokens`), dengan nama dan masa berlaku 1–365 hari, serta mencabutnya dari halaman yang sama. Token terikat pada admin aktif yang membuatnya; token kedaluwarsa, dicabut, atau milik pengguna nonaktif/turun role ditolak. Nilai token hanya ditampilkan sekali.
 
 ```text
 GET /api/v1/dashboard
 GET /api/v1/monitoring/sls?page=1&per_page=100
 Authorization: Bearer se2026_xxxxx
 ```
+
+Respons API SLS berisi `data`, `total`, `page` dan `per_page`. API Bearer tidak menerima cookie login sebagai pengganti token.
 
 Parameter filter API SLS: `kec_code`, `desa_code`, `pml_id`, `pcl_id`, `status`, `progress_min`, dan `progress_max`. `per_page` dibatasi maksimum 1.000.
 
@@ -134,6 +145,8 @@ Parameter filter API SLS: `kec_code`, `desa_code`, `pml_id`, `pcl_id`, `status`,
 ```powershell
 python -m pytest -q
 ```
+
+Suite regresi juga menguji penolakan admin publik, flag registrasi, revokasi akun/token, impor kosong/angka invalid/duplikasi penugasan, rollback, formula ekspor, artifact unik, dan endpoint API Bearer.
 
 Pengujian mencakup empat kasus rumus wajib, kondisi `OPEN + DRAFT > total`, mapping nama kolom, akses role, pemilihan sheet `sls`, pengabaian kolom kosong, penjagaan nol di depan, CSV, kolom wajib, dan duplikasi konflik.
 

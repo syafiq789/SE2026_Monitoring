@@ -24,6 +24,17 @@ from extensions import db
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
+    key = app.config.get("SECRET_KEY", "")
+    if not key or key in {
+        "se2026-bps-banyuwangi-secret-key-local", "se2026-bps-banyuwangi-secret",
+        "replace-with-a-random-secret",
+    }:
+        raise RuntimeError("Set SECRET_KEY to a unique random secret before starting the application.")
+    if app.config.get("IS_VERCEL") and (
+        not os.getenv("DATABASE_URL")
+        or app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite")
+    ):
+        raise RuntimeError("Vercel requires DATABASE_URL for a persistent external database.")
 
     Path(app.config["UPLOAD_FOLDER"]).mkdir(parents=True, exist_ok=True)
     Path(app.config["EXPORT_FOLDER"]).mkdir(parents=True, exist_ok=True)
@@ -53,47 +64,6 @@ def create_app(config_class=Config):
         api_bp,
     ):
         app.register_blueprint(blueprint)
-
-    _tables_initialized = False
-
-    @app.before_request
-    def ensure_extra_tables():
-        nonlocal _tables_initialized
-        if os.getenv("VERCEL"):
-            from config import ensure_vercel_sqlite_seeded
-
-            ensure_vercel_sqlite_seeded()
-        if not _tables_initialized:
-            try:
-                import models.activity_log
-                from models.user import User
-
-                db.create_all()
-                if User.query.count() == 0:
-                    admin_user = User(
-                        nama_lengkap="Administrator",
-                        username="admin",
-                        email="admin@se2026.local",
-                        role="admin",
-                        is_active=True,
-                    )
-                    admin_user.set_password("admin123")
-                    reg_user = User(
-                        nama_lengkap="Pengguna Monitoring",
-                        username="user",
-                        email="user@se2026.local",
-                        role="user",
-                        is_active=True,
-                    )
-                    reg_user.set_password("user123")
-                    db.session.add_all([admin_user, reg_user])
-                    db.session.commit()
-                _tables_initialized = True
-            except Exception:
-                db.session.rollback()
-        from routes.auth_routes import _sync_registered_snapshots
-
-        _sync_registered_snapshots()
 
     @app.route("/")
     def index():

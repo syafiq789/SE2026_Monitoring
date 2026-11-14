@@ -3,12 +3,7 @@
   "builds": [
     {
       "src": "app.py",
-      "use": "@vercel/python",
-      "config": {
-        "includeFiles": [
-          "se2026_bundled.db"
-        ]
-      }
+      "use": "@vercel/python"
     },
     {
       "src": "static/**",

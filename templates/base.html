@@ -154,6 +154,8 @@
 
         {% if current_user.role == 'admin' %}
 
+        <a href="{{ url_for('api.tokens') }}" class="nav-item"><i class="fa-solid fa-key"></i><span>API Token</span></a>
+
         <div class="nav-section-title">
           Administrasi
         </div>

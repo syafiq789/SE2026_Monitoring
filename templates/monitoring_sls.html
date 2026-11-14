@@ -167,19 +167,19 @@
           data: 'kec_code',
           render: (data) => `<span class="code-pill">${data}</span>`
         },
-        { data: 'kec_name', className: 'fw-semibold' },
+        { data: 'kec_name', className: 'fw-semibold', render: jQuery.fn.dataTable.render.text() },
         {
           data: 'desa_code',
           render: (data) => `<span class="code-pill">${data}</span>`
         },
-        { data: 'desa_name' },
+        { data: 'desa_name', render: jQuery.fn.dataTable.render.text() },
         {
           data: 'subsls_code',
           render: (data) => `<span class="code-pill">${data}</span>`
         },
-        { data: 'subsls_name' },
-        { data: 'nama_pml' },
-        { data: 'nama_pcl' },
+        { data: 'subsls_name', render: jQuery.fn.dataTable.render.text() },
+        { data: 'nama_pml', render: jQuery.fn.dataTable.render.text() },
+        { data: 'nama_pcl', render: jQuery.fn.dataTable.render.text() },
         { data: 'total_target' },
         { data: 'open_count' },
         { data: 'draft_count' },
@@ -236,7 +236,7 @@
         const raw = decodeURIComponent(this.dataset.detail);
         const row = JSON.parse(raw);
         document.getElementById('detailTitle').textContent = `${row.subsls_code} · ${row.subsls_name}`;
-        document.getElementById('detailIdentity').innerHTML = `<strong>${row.kec_name} / ${row.desa_name}</strong><span>PML: ${row.nama_pml} · PCL: ${row.nama_pcl}</span>`;
+        document.getElementById('detailIdentity').textContent = `${row.kec_name} / ${row.desa_name} · PML: ${row.nama_pml} · PCL: ${row.nama_pcl}`;
         document.getElementById('workflowGrid').innerHTML = Object.entries(labels).map(([key, label]) =>
           `<article><span>${label}</span><strong>${row[key] ?? 0}</strong></article>`
         ).join('') +

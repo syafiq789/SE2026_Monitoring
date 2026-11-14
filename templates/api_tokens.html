@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}API Token{% endblock %}
+{% block content %}
+<h1>API Token</h1>
+<p>Token hanya ditampilkan saat dibuat. Simpan secara aman; token memberi akses baca data monitoring.</p>
+{% if raw_token %}<div class="alert alert-warning"><code>{{ raw_token }}</code></div>{% endif %}
+<form method="post" class="mb-4">
+  <label>Nama token <input name="name" required maxlength="100" class="form-control"></label>
+  <label>Masa berlaku (hari) <input name="expires_days" type="number" min="1" max="365" value="30" required class="form-control"></label>
+  <button class="btn btn-primary" type="submit">Buat token</button>
+</form>
+<table class="table"><thead><tr><th>Nama</th><th>Prefix</th><th>Kedaluwarsa (UTC)</th><th>Status</th><th>Aksi</th></tr></thead><tbody>
+{% for token in tokens %}
+<tr><td>{{ token.name }}</td><td>{{ token.token_prefix }}</td><td>{{ token.expires_at or '-' }}</td><td>{{ 'Aktif' if token.is_active else 'Dicabut' }}</td>
+<td>{% if token.is_active %}<form method="post" action="{{ url_for('api.revoke_token', token_id=token.id) }}"><button class="btn btn-danger btn-sm">Cabut</button></form>{% endif %}</td></tr>
+{% endfor %}
+</tbody></table>
+{% endblock %}

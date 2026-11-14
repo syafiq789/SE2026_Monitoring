@@ -271,11 +271,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const markers = [];
 
+  const escapeHtml = value => {
+    const span = document.createElement("span");
+    span.textContent = String(value);
+    return span.innerHTML;
+  };
+
   function createPopupContent(f) {
     return `
       <div style="min-width: 220px; font-family: Inter, sans-serif;">
         <div style="border-bottom: 2px solid ${f.color}; padding-bottom: 6px; margin-bottom: 8px;">
-          <h6 style="margin: 0; font-weight: 700; color: #261913;">Kec. ${f.kec_name}</h6>
+          <h6 style="margin: 0; font-weight: 700; color: #261913;">Kec. ${escapeHtml(f.kec_name)}</h6>
           <small style="color: #756960;">Kode Wilayah: <strong>${f.kec_code}</strong></small>
         </div>
         <div style="margin-bottom: 8px;">
@@ -318,7 +324,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }).addTo(map);
 
     circle.bindPopup(createPopupContent(f), { className: "custom-popup" });
-    circle.bindTooltip(`<b>${f.kec_name}</b>: ${f.progress}%`, { direction: "top" });
+    circle.bindTooltip(`<b>${escapeHtml(f.kec_name)}</b>: ${f.progress}%`, { direction: "top" });
 
     markers.push({
       feature: f,

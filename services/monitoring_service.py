@@ -141,8 +141,9 @@ def get_sls_datatable(
     if sort_col != SLS.id:
         query = query.order_by(SLS.subsls_code.asc())
 
-    if length > 0:
-        query = query.offset(start).limit(length)
+    start = max(0, start)
+    length = min(1000, max(1, length))
+    query = query.offset(start).limit(length)
 
     records = query.all()
 

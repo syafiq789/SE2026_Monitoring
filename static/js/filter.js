@@ -6,7 +6,10 @@
   if (!kec || !desa || !pml || !pcl) return;
   const fill = (select, items, placeholder, key='id') => {
     const value = select.value;
-    select.innerHTML = `<option value="">${placeholder}</option>` + items.map(item => `<option value="${item[key]}">${item.code ? `${item.code} · ` : ''}${item.name}</option>`).join('');
+    select.replaceChildren(new Option(placeholder, ''));
+    items.forEach(item => select.add(new Option(
+      `${item.code ? `${item.code} · ` : ''}${item.name}`, String(item[key])
+    )));
     if ([...select.options].some(option => option.value === value)) select.value = value;
   };
   const refresh = async (keepPml=false) => {

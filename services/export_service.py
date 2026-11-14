@@ -1,4 +1,5 @@
 from pathlib import Path
+from uuid import uuid4
 
 import pandas as pd
 from flask import current_app
@@ -65,10 +66,17 @@ def _rows(level, filters):
     }[level](filters)
 
 
+def _spreadsheet_text(value):
+    # Quoting CSV alone does not prevent spreadsheet formula evaluation.
+    if isinstance(value, str) and value.lstrip().startswith(("=", "+", "-", "@", "\t", "\r", "\n")):
+        return "'" + value
+    return value
+
+
 def _dataframe(level, filters):
     rows = _rows(level, filters)
     columns = EXPORT_COLUMNS[level]
-    data = [{label: row.get(key, "") for key, label in columns} for row in rows]
+    data = [{label: _spreadsheet_text(row.get(key, "")) for key, label in columns} for row in rows]
     return pd.DataFrame(data, columns=[label for _, label in columns])
 
 
@@ -79,7 +87,7 @@ def create_export(level: str, file_type: str, filters: dict) -> Path:
     output_dir = Path(current_app.config["EXPORT_FOLDER"])
     output_dir.mkdir(parents=True, exist_ok=True)
     extension = "xlsx" if file_type == "excel" else "csv"
-    path = output_dir / f"monitoring_{level}_{export_timestamp()}.{extension}"
+    path = output_dir / f"monitoring_{level}_{export_timestamp()}_{uuid4().hex}.{extension}"
 
     if file_type == "csv":
         frame.to_csv(path, index=False, encoding="utf-8-sig")

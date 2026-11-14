@@ -4,11 +4,10 @@ Konfigurasi Sistem SE2026 Monitoring BPS Banyuwangi
 File ini mengatur seluruh variabel konfigurasi aplikasi:
 1. Membaca variabel lingkungan dari file .env (database, secret key, port).
 2. Menentukan URI koneksi database (MySQL / MariaDB / SQLite).
-3. Mengatur persistensi database pada lingkungan cloud serverless Vercel (/tmp).
+3. Menggunakan database persisten dan direktori file sementara pada Vercel.
 """
 
 import os
-import shutil
 from datetime import timedelta
 from pathlib import Path
 from urllib.parse import quote_plus
@@ -21,31 +20,8 @@ from dotenv import load_dotenv
 # =========================================================
 BASE_DIR = Path(__file__).resolve().parent
 ENV_FILE = BASE_DIR / ".env"
-BUNDLED_SQLITE_DB = BASE_DIR / "se2026_bundled.db"
-VERCEL_TMP_SQLITE_DB = Path("/tmp/se2026_monitoring.db")
-
-# override=True agar nilai terbaru dari .env selalu digunakan
-load_dotenv(ENV_FILE, override=True)
-
-
-def ensure_vercel_sqlite_seeded() -> Path:
-    """
-    Menyalin database awal (se2026_bundled.db) ke /tmp/se2026_monitoring.db
-    di Vercel apabila instance serverless baru belum memiliki file database.
-    """
-    try:
-        if (
-            BUNDLED_SQLITE_DB.exists()
-            and (
-                not VERCEL_TMP_SQLITE_DB.exists()
-                or VERCEL_TMP_SQLITE_DB.stat().st_size < 100_000
-            )
-        ):
-            VERCEL_TMP_SQLITE_DB.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(BUNDLED_SQLITE_DB, VERCEL_TMP_SQLITE_DB)
-    except Exception:
-        pass
-    return VERCEL_TMP_SQLITE_DB
+# Deployment environment takes precedence over optional local .env values.
+load_dotenv(ENV_FILE, override=False)
 
 
 def env_bool(name: str, default: bool = False) -> bool:
@@ -98,10 +74,7 @@ class Config:
     # =====================================================
     # Konfigurasi utama Flask
     # =====================================================
-    SECRET_KEY = os.getenv(
-        "SECRET_KEY",
-        "se2026-bps-banyuwangi-secret-key-local",
-    ).strip()
+    SECRET_KEY = os.getenv("SECRET_KEY", "").strip()
 
     DEBUG = env_bool("DEBUG", False)
     IS_VERCEL = bool(os.getenv("VERCEL"))
@@ -137,15 +110,10 @@ class Config:
     encoded_user = quote_plus(DB_USER)
     encoded_password = quote_plus(DB_PASSWORD)
 
-    if IS_VERCEL and not os.getenv("DATABASE_URL") and DB_HOST in {"127.0.0.1", "localhost"}:
-        ensure_vercel_sqlite_seeded()
-        DEFAULT_DATABASE_URL = f"sqlite:///{VERCEL_TMP_SQLITE_DB.as_posix()}"
-    else:
-        DEFAULT_DATABASE_URL = (
-            f"mysql+pymysql://{encoded_user}:{encoded_password}"
-            f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-            f"?charset=utf8mb4"
-        )
+    DEFAULT_DATABASE_URL = (
+        f"mysql+pymysql://{encoded_user}:{encoded_password}"
+        f"@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
+    )
 
     DATABASE_URL = normalize_database_url(
         os.getenv(

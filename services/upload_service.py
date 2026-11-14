@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import hashlib
 from pathlib import Path
+
+from decimal import Decimal, InvalidOperation
 
 import pandas as pd
 from sqlalchemy import delete, insert
@@ -117,16 +118,22 @@ def read_sls_source(file_path: str | Path) -> tuple[pd.DataFrame, str]:
         raise ImportValidationError(f"Excel tidak dapat dibaca atau file rusak: {exc}") from exc
 
 
-def _convert_numeric(series: pd.Series, column: str, warnings: list[str]) -> pd.Series:
-    cleaned = series.astype(str).str.strip().replace({"": None, "nan": None, "None": None})
-    numeric = pd.to_numeric(cleaned, errors="coerce")
-    invalid_mask = cleaned.notna() & numeric.isna()
-    for index in series.index[invalid_mask][:50]:
-        warnings.append(f"Nilai numerik tidak valid pada baris {index + 2}, kolom {column}; diubah menjadi 0.")
-    negative_mask = numeric.fillna(0) < 0
-    for index in series.index[negative_mask][:50]:
-        warnings.append(f"Nilai negatif pada baris {index + 2}, kolom {column}; diubah menjadi 0.")
-    return numeric.fillna(0).clip(lower=0).round().astype("int64")
+def _convert_numeric(series: pd.Series, column: str) -> pd.Series:
+    values = []
+    for index, raw in series.items():
+        text = str(raw).strip()
+        try:
+            number = Decimal(text or "0")
+            if (not number.is_finite() or number < 0 or number != number.to_integral_value()
+                    or number > 2_147_483_647
+                    or (not text and column in {"total_target", "open_count", "draft_count"})):
+                raise ValueError
+        except (InvalidOperation, ValueError):
+            raise ImportValidationError(
+                f"Baris {index + 2}, kolom {column}: wajib bilangan bulat nonnegatif (maksimum 2147483647)."
+            ) from None
+        values.append(int(number))
+    return pd.Series(values, index=series.index, dtype="int64")
 
 
 def prepare_import_data(file_path: str | Path) -> dict:
@@ -150,6 +157,9 @@ def prepare_import_data(file_path: str | Path) -> dict:
             missing_columns=missing,
         )
 
+    if frame.empty:
+        raise ImportValidationError("File tidak berisi data SLS. Data lama tidak diubah.")
+
     for column in IDENTITY_COLUMNS:
         if column not in frame:
             frame[column] = ""
@@ -160,7 +170,7 @@ def prepare_import_data(file_path: str | Path) -> dict:
 
     warnings: list[str] = []
     for column in NUMERIC_COLUMNS:
-        frame[column] = _convert_numeric(frame[column], column, warnings)
+        frame[column] = _convert_numeric(frame[column], column)
 
     widths = {"prov": 2, "kab": 2, "kec_code": 3, "desa_code": 3, "subsls_code": 6}
     for column, width in widths.items():
@@ -221,29 +231,11 @@ def prepare_import_data(file_path: str | Path) -> dict:
 
     unique_records: list[dict] = []
     conflicts = []
-    assignment_columns = ("email_pcl", "username_pcl", "nama_pcl", "email_pml", "nama_pml")
     for base_key, group in grouped_by_key.items():
-        if len(group) == 1:
-            unique_records.append(group[0])
-            continue
-
-        identities = [
-            tuple(clean_text(record[column]).lower() for column in assignment_columns)
-            for record in group
-        ]
-        if len(set(identities)) != len(identities):
+        if len(group) != 1:
             conflicts.append(base_key)
-            continue
-
-        warnings.append(
-            f"Kunci SLS {base_key} digunakan oleh {len(group)} penugasan PCL/PML berbeda; "
-            "setiap penugasan disimpan sebagai baris terpisah."
-        )
-        for record, identity in zip(group, identities):
-            suffix = hashlib.sha1("|".join(identity).encode("utf-8")).hexdigest()[:12]
-            separated = record.copy()
-            separated["sls_key"] = f"{base_key}-{suffix}"
-            unique_records.append(separated)
+        else:
+            unique_records.append(group[0])
 
     if conflicts:
         sample = ", ".join(sorted(set(conflicts))[:30])
@@ -281,6 +273,8 @@ def _pcl_key(record):
 
 def import_prepared_data(prepared: dict) -> dict:
     records = prepared["records"]
+    if not records:
+        raise ImportValidationError("Tidak ada data SLS untuk diimpor. Data lama tidak diubah.")
     db.session.execute(delete(SLS))
     db.session.execute(delete(PCL))
     db.session.execute(delete(PML))

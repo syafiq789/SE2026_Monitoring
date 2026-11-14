@@ -14,7 +14,7 @@
 </head>
 <body>
 
-  {% set current_tab = active_tab|default(request.args.get('tab', 'login')) %}
+  {% set current_tab = active_tab|default(request.args.get('tab', 'login')) if config.ALLOW_PUBLIC_REGISTER else 'login' %}
 
   <main class="portal-shell">
     <section class="portal-card">
@@ -38,7 +38,7 @@
         </h1>
         <p class="portal-subtitle" id="portalHeadingSubtitle">
           {% if current_tab == 'register' %}
-            Pilih role Admin atau User untuk mulai mengakses dashboard monitoring.
+            Daftar sebagai User Monitoring untuk mengakses dashboard.
           {% else %}
             Masuk dengan akun terdaftar atau daftar terlebih dahulu sebelum mengakses sistem.
           {% endif %}
@@ -57,6 +57,7 @@
           <span>Masuk Akun</span>
         </button>
 
+        {% if config.ALLOW_PUBLIC_REGISTER %}
         <button
           type="button"
           class="portal-tab-btn {% if current_tab == 'register' %}active{% endif %}"
@@ -66,6 +67,7 @@
           <i class="fa-solid fa-user-plus"></i>
           <span>Daftar Akun Baru</span>
         </button>
+        {% endif %}
       </div>
 
       <!-- FLASH MESSAGES -->
@@ -149,7 +151,7 @@
 
             <span class="login-security">
               <i class="fa-solid fa-shield-halved"></i>
-              Sesi Terenkripsi
+              Sesi Terlindungi
             </span>
           </div>
 
@@ -159,53 +161,25 @@
           </button>
         </form>
 
+        {% if config.ALLOW_PUBLIC_REGISTER %}
         <div class="portal-switch-hint">
-          <span>Belum punya akun Admin atau User?</span>
+          <span>Belum punya akun?</span>
           <button type="button" class="portal-switch-link" data-switch-to="pane-register">
             Daftar sekarang
           </button>
         </div>
+        {% endif %}
       </div>
 
+      {% if config.ALLOW_PUBLIC_REGISTER %}
       <!-- ==================== TAB 2: DAFTAR AKUN BARU ==================== -->
-      {% set selected_role = request.form.get('role', request.args.get('role', 'user')) %}
       <div
         id="pane-register"
         class="portal-tab-pane {% if current_tab == 'register' %}active{% endif %}"
       >
         <form method="POST" action="{{ url_for('auth.register') }}" class="login-form" autocomplete="off">
 
-          <!-- PILIH ROLE AKUN -->
-          <div class="login-field">
-            <label>Pilih Role Pendaftaran</label>
-            <div class="role-selector-grid">
-              <label class="role-option-card">
-                <input
-                  type="radio"
-                  name="role"
-                  value="user"
-                  {% if selected_role != 'admin' %}checked{% endif %}
-                >
-                <div class="role-option-copy">
-                  <strong><i class="fa-solid fa-user me-1"></i> User Monitoring</strong>
-                  <small>Dashboard, Tabel SLS/PCL/PML, WebGIS & Follow-Up WA</small>
-                </div>
-              </label>
-
-              <label class="role-option-card">
-                <input
-                  type="radio"
-                  name="role"
-                  value="admin"
-                  {% if selected_role == 'admin' %}checked{% endif %}
-                >
-                <div class="role-option-copy">
-                  <strong><i class="fa-solid fa-user-shield me-1"></i> Administrator</strong>
-                  <small>Akses Penuh + Upload SLS, Export Data & Kelola User</small>
-                </div>
-              </label>
-            </div>
-          </div>
+          <p>Akun baru memiliki akses User Monitoring. Administrator dibuat oleh admin yang berwenang.</p>
 
           <!-- NAMA LENGKAP & USERNAME (2 KOLOM RINGKAS) -->
           <div class="form-grid-2">
@@ -308,6 +282,8 @@
         </div>
       </div>
 
+      {% endif %}
+
     </section>
 
     <!-- PILL FITUR DI BAWAH KARTU -->
@@ -355,7 +331,7 @@
         if (targetId === "pane-register") {
           headingTitle.textContent = "Daftar Akun Baru";
           headingSubtitle.textContent =
-            "Pilih role Admin atau User untuk mulai mengakses dashboard monitoring.";
+            "Daftar sebagai User Monitoring untuk mengakses dashboard.";
         } else {
           headingTitle.textContent = "Portal Monitoring SE2026";
           headingSubtitle.textContent =

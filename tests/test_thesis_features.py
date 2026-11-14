@@ -80,7 +80,7 @@ def test_followup_priority_and_messages():
     assert "Budi Santoso" in broadcast
 
 
-def test_register_admin_and_user_roles():
+def test_public_registration_never_creates_admin():
     from app import create_app
     from config import Config
     from models.user import User
@@ -92,6 +92,10 @@ def test_register_admin_and_user_roles():
 
     app = create_app(TestCfg)
     client = app.test_client()
+
+    from extensions import db
+    with app.app_context():
+        db.create_all()
 
     # Pastikan akses dashboard tanpa login diarahkan ke /login
     resp_unauth = client.get("/dashboard")
@@ -129,6 +133,6 @@ def test_register_admin_and_user_roles():
     with app.app_context():
         u_admin = User.query.filter_by(username="admin_baru").first()
         u_user = User.query.filter_by(username="user_baru").first()
-        assert u_admin is not None and u_admin.role == "admin"
+        assert u_admin is not None and u_admin.role == "user"
         assert u_user is not None and u_user.role == "user"
 
